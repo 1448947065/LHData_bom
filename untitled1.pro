@@ -10,6 +10,7 @@ CONFIG += c++11
 
 SOURCES += \
     btnstyle.cpp \
+    lhxlsx.cpp \
     main.cpp \
     mainwindow.cpp \
     mysql.cpp \
@@ -17,12 +18,12 @@ SOURCES += \
 
 HEADERS += \
     btnstyle.h \
+    lhxlsx.h \
     mainwindow.h \
     mysql.h \
     titlebar.h
 
 FORMS += \
-    form.ui \
     mainwindow.ui
 
 # QMAKE_CFLAGS  += /utf-8

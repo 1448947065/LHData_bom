@@ -3,8 +3,6 @@
 //system.h
 #include <QGraphicsDropShadowEffect>
 #include <QMainWindow>
-#include <QtSql/QSqlDatabase>
-#include <QtSql/QSqlQuery>
 #include <QPushButton>
 #include <QVBoxLayout>
 #include <QMenuBar>
@@ -26,16 +24,19 @@ class MainWindow : public QMainWindow
 public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
-    //titlePresent();
+    MySql *dbManager = new MySql(this);
 private slots:
 
     void on_btn_sql_mar_clicked();
     void on_btn_bom_clicked();
+signals:
+    bool mysqlCreate(const QVector<QVector<QString>> columnData);
 
 protected:
     void InitUi();
     void ConnectSlot();
     void test();
+    void insert();
 private:
     Ui::MainWindow *ui;
 };

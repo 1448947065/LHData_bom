@@ -70,25 +70,42 @@ void MainWindow::InitUi()
         title->syncMaxButton(isMaximized());
     });
     connect(title, &TitleBar::closeClicked, this, &MainWindow::close);
+    connect(this, &MainWindow::mysqlCreate, dbManager, &MySql::initializeDatabase);
+
 }
 void MainWindow::test()
 {
-    QSqlDatabase db = QSqlDatabase::addDatabase("QMYSQL");
-    db.setHostName("localhost");
-    db.setUserName("root");
-    db.setPassword("123456");
-    db.setDatabaseName("lhlist");
-    if (!db.open()) {
-        qDebug() << "lhdb is open sucessful!";
-    } else {
-        qDebug() << "lhdb is open failed!";
-    }
-    QStringList drivers = QSqlDatabase::drivers();
-    qDebug() << "Available database drivers:";
-    foreach(const QString &driver, drivers) {
-        qDebug() << " - " << driver;
-    }
+
+
+//    QXlsx::Document bomXlsxR("D:/work project/sql/untitled1/不合格BOM清单.xlsx");
+//    int maxCol = bomXlsxR.dimension().lastColumn();
+//    int maxRow = bomXlsxR.dimension().lastRow();
+//    qDebug()<<maxRow;
+
+//    QVector<QVector<QString>> columnData(maxCol);
+//    for (int i = 0; i < maxCol; i++) {
+//        columnData[i].resize(maxRow); //预分配每列的空间
+//    }
+//        qDebug() << "表格大小：" << maxRow << "行," << maxCol << "列";
+
+//        for (int row = 1; row <= maxRow; ++row) {
+//            for (int col = 1; col <= maxCol; ++col) {
+//                QXlsx::Cell* cell = bomXlsxR.cellAt(row, col);
+//                QString value = cell ? cell->value().toString() : "";
+//                columnData[col-1][row-1] = value;
+//            }
+//        }
+//        emit mysqlCreate(columnData);
+
+//        for (int col = 0; col < maxCol; ++col) {
+//            qDebug() << "列" << col+1 << "数据:";
+//            for (const QString& value : columnData[col]) {
+//                qDebug() << value;
+//            }
+//            qDebug() << "---------------------";
+//        }
 }
+
 void MainWindow::ConnectSlot()
 {
 
@@ -101,9 +118,25 @@ void MainWindow::on_btn_sql_mar_clicked()
     ui->stackedWidget->setCurrentIndex(0);
 }
 
-
 void MainWindow::on_btn_bom_clicked()
 {
 
 }
+
+void MainWindow::insert()
+{
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
 
