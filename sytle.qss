@@ -1,0 +1,45 @@
+#centralwidget {
+    /* 如果不需要边框，直接不画边框 */
+    border: none;
+    border-radius: 10px;      /* 修正：100px */
+    background-color: #f7f9faff;
+}
+
+QStatusBar{
+      background:white;
+      color:black;
+      min-height: 36px;      /* 改这里：期望的高度 */
+      padding: 4px 12px;     /* 内边距也能“撑高” */
+}
+
+
+
+/* Tab文本：未选=灰，选=黑+粗 */
+QWidget#TopTabsBar QPushButton {
+    border:none; background:transparent; color:#9aa0a6;
+    font-size:18px; padding:4px 2px;
+}
+QWidget#TopTabsBar QPushButton:checked {
+    color:#202124; font-weight:600;
+}
+/* 只作用于名为 btn_sql_mar 的按钮 */
+QPushButton#btn_sql_mar {
+    background: transparent;   /* 背景透明 */
+    border: none;              /* 去边框 */
+    color: #000;               /* 字体黑色 */
+    font-size: 20pt;           /* 比常见的 12pt 大一号，按需改 13pt/14px */
+    padding: 4px 8px;          /* 可选：留点内边距更好看 */
+}
+QPushButton#btn_bom {
+    background: transparent;   /* 背景透明 */
+    border: none;              /* 去边框 */
+    color: #000;               /* 字体黑色 */
+    font-size: 20pt;           /* 比常见的 12pt 大一号，按需改 13pt/14px */
+    padding: 4px 8px;          /* 可选：留点内边距更好看 */
+}
+/* 悬停/按下/选中时也保持透明，不被全局样式染色 */
+QPushButton#btn_sql_mar:hover,
+QPushButton#btn_sql_mar:pressed,
+QPushButton#btn_sql_mar:checked {
+    background: transparent;
+}
