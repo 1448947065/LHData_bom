@@ -10,6 +10,8 @@ CONFIG += c++11
 
 SOURCES += \
     btnstyle.cpp \
+    connection.cpp \
+    createdatabase.cpp \
     lhxlsx.cpp \
     main.cpp \
     mainwindow.cpp \
@@ -18,12 +20,16 @@ SOURCES += \
 
 HEADERS += \
     btnstyle.h \
+    connection.h \
+    createdatabase.h \
     lhxlsx.h \
     mainwindow.h \
     mysql.h \
     titlebar.h
 
 FORMS += \
+    connection.ui \
+    createdatabase.ui \
     mainwindow.ui
 
 # QMAKE_CFLAGS  += /utf-8
@@ -37,3 +43,10 @@ INCLUDEPATH += "C:/Program Files/MySQL/MySQL Server 8.0/include"
 qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
+
+RESOURCES += \
+    res.qrc
+
+DISTFILES += \
+    img/co.png \
+    img/cre.png

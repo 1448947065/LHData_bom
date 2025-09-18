@@ -10,36 +10,15 @@ void MySql::recv_excel()
 {
 
 }
+
 MySql::~MySql()
 {
+
 }
+
 bool MySql::initializeDatabase(const QVector<QVector<QString>> columnData)
 {
-    db = QSqlDatabase::addDatabase("QMYSQL");
-    db.setHostName("localhost");
-    db.setUserName("root");
-    db.setPassword("123456");
-    if (!db.open()) {
-        qDebug() << "MySQL服务器连接失败：" << db.lastError().text();
-        return false;
-    }
-    qDebug() << "MySQL服务器连接成功！";
 
-    QSqlQuery checkDb(db);
-    if (!checkDb.exec("CREATE DATABASE IF NOT EXISTS lhlist "
-                     "CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci")) {
-        qDebug() << "创建数据库失败：" << checkDb.lastError().text();
-        return false;
-    }
-    qDebug() << "数据库 lhlist 创建/验证成功";
-
-    db.close();
-    db.setDatabaseName("lhlist");
-    if (!db.open()) {
-        qDebug() << "连接数据库 lhlist 失败：" << db.lastError().text();
-        return false;
-    }
-    qDebug() << "成功连接到数据库 lhlist";
 
     QSqlQuery createQuery(db);
     QString createTableSql = R"(
@@ -126,6 +105,55 @@ bool MySql::initializeDatabase(const QVector<QVector<QString>> columnData)
                 return false;
             }
         }
+}
+
+void MySql::connectDatabase(const QString &connName,
+                            const QString &host,quint16 port,
+                            const QString &user,const QString &pwd,
+                            bool savePwd, bool saveConfig)
+{
+    if (!QSqlDatabase::isDriverAvailable("QMYSQL")) {
+        qCritical() << "QMYSQL驱动不可用！可用驱动：" << QSqlDatabase::drivers();
+        return;
+    }
+
+    if (QSqlDatabase::contains(connName)) {
+        QSqlDatabase::removeDatabase(connName);
+    }
+
+    db = QSqlDatabase::addDatabase("QMYSQL", connName);
+    db.setHostName(host);
+    db.setPort(port);
+    db.setUserName(user);
+    db.setPassword(pwd);
+    //db.setDatabaseName(connName);
+
+    if (!db.open()) {
+        qCritical() << "连接数据库失败：" << db.lastError().text();
+        return;
+    }
+
+    qDebug() << "成功连接到已有数据库 lhlist";
+}
+
+QSqlTableModel* MySql::getModel(const QString &tableName)
+{
+    QSqlTableModel *model = new QSqlTableModel(nullptr, db);
+    model->setTable(tableName);
+    model->setEditStrategy(QSqlTableModel::OnManualSubmit);
+    model->select();
+    return model;
+}
+
+void MySql::handleDbInfo(const QString &connName, const QString &host,
+                 quint16 port, const QString &user, const QString &pwd,
+                 bool savePwd, bool saveConfig)
+{
+        qDebug() << "==== 收到数据库连接信号 ====";
+    connectDatabase(connName, host,
+                    port, user, pwd, savePwd, saveConfig);
+    qDebug()<<"1234";
+
 }
 
 int MySql::insertDatabase()

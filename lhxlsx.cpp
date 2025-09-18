@@ -1,6 +1,6 @@
 #include "lhxlsx.h"
 
-lhxlsx::lhxlsx()
+lhxlsx::lhxlsx(QWidget *parent)
 {
 
 }

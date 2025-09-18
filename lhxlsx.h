@@ -2,12 +2,12 @@
 #define LHXLSX_H
 
 #include <QObject>
-
-class lhxlsx : public QObject
+#include <QWidget>
+class lhxlsx : public QWidget
 {
     Q_OBJECT
 public:
-    lhxlsx();
+    lhxlsx(QWidget *parent  = nullptr);
 };
 
 #endif // LHXLSX_H
