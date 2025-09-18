@@ -62,6 +62,7 @@ protected:
     void connectToDatabase(const QString &connName);
     void onConnectionDoubleClicked(const QModelIndex &index);
     void loadSavedConnections(QStandardItem *parentItem);
+    void setTableStyle();
 private:
     Ui::MainWindow *ui;
     Connection *con = new Connection;

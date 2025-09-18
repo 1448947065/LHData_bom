@@ -4,6 +4,10 @@
         <file>img/sec.png</file>
         <file>img/co.png</file>
         <file>img/cre.png</file>
+        <file>img/del.png</file>
+        <file>img/cha.png</file>
+        <file>img/databaseclose.png</file>
+        <file>img/table.png</file>
     </qresource>
     <qresource prefix="/ini"/>
 </RCC>

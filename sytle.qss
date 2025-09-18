@@ -1,8 +1,9 @@
+
 #centralwidget {
     /* 如果不需要边框，直接不画边框 */
     border: none;
     border-radius: 10px;      /* 修正：100px */
-    background-color: #f7f9faff;
+    background-color: #b6bcbebd;
 }
 
 QStatusBar{
@@ -12,8 +13,43 @@ QStatusBar{
       padding: 4px 12px;     /* 内边距也能“撑高” */
 }
 
+/* 树状视图 - 白色背景加浅灰边框 */
+QTreeView {
+    background-color: #ffffff;
+    border-top: 2px solid #e0e0e0;    /* 上边框 */
+    border-right: 2px solid #e0e0e0;  /* 右边框 */
+    border-bottom: none; /* 下边框 */
+    border-left: none;               /* 无左边框 */
+    border-radius: 4px;
+    alternate-background-color: #f8f8f8;
+    outline: 0;
+    font-size: 20px;
+}
+QWidget#page {
+    border-top: 2px solid #e0e0e0;
+}
+QTreeView::item {
+    height: 35px;
+    padding-left: 15px;
+    background-color: #ffffff;
+    color: #333333;
+    border: none;
+}
 
+QTreeView::item:selected {
+    background-color: #e6f2ff;
+    color: #0066cc;
+    border-left: 3px solid #0066cc;
+}
 
+QTreeView::item:hover {
+    background-color: #f0f7ff;
+}
+QTableView {
+    background-color: #ffffff;
+    alternate-background-color: #f0f8ff; /* 浅蓝色交替行 */
+    gridline-color: #e0e0e0;
+}
 /* Tab文本：未选=灰，选=黑+粗 */
 QWidget#TopTabsBar QPushButton {
     border:none; background:transparent; color:#9aa0a6;
@@ -37,6 +73,7 @@ QPushButton#btn_bom {
     font-size: 20pt;           /* 比常见的 12pt 大一号，按需改 13pt/14px */
     padding: 4px 8px;          /* 可选：留点内边距更好看 */
 }
+
 /* 悬停/按下/选中时也保持透明，不被全局样式染色 */
 QPushButton#btn_sql_mar:hover,
 QPushButton#btn_sql_mar:pressed,

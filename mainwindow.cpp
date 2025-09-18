@@ -20,7 +20,6 @@ void MainWindow::InitUi()
     setAttribute(Qt::WA_TranslucentBackground, true);
     setStyleSheet("background: transparent;");
 
-
     QIcon qicon;
     qicon.addFile(":/img/coc.png");
     ui->btn_connection->setIcon(qicon);
@@ -30,8 +29,26 @@ void MainWindow::InitUi()
     QIcon qicon1;
     qicon1.addFile(":/img/sec.png");
     ui->btn_search->setIcon(qicon1);
-    ui->btn_search->setIconSize(QSize(40,40));
+    ui->btn_search->setIconSize(QSize(45,45));
     ui->btn_search->setFixedSize(50, 50);
+
+    QIcon qicon2;
+    qicon2.addFile(":/img/cre.png");
+    ui->btn_create->setIcon(qicon2);
+    ui->btn_create->setIconSize(QSize(40,40));
+    ui->btn_create->setFixedSize(50, 50);
+
+    QIcon qicon3;
+    qicon3.addFile(":/img/del.png");
+    ui->btn_del->setIcon(qicon3);
+    ui->btn_del->setIconSize(QSize(45,45));
+    ui->btn_del->setFixedSize(50, 50);
+
+    QIcon qicon4;
+    qicon4.addFile(":/img/cha.png");
+    ui->btn_change->setIcon(qicon4);
+    ui->btn_change->setIconSize(QSize(40,40));
+    ui->btn_change->setFixedSize(50, 50);
 
     auto *root = new QWidget(this);
     root->setAttribute(Qt::WA_StyledBackground, true);
@@ -151,9 +168,7 @@ void MainWindow::on_btn_connection_clicked()
 
 void MainWindow::on_btn_search_clicked()
 {
-    QSqlTableModel *model = dbManager->getModel("lhbom");
-    ui->tableView->setModel(model);
-    ui->tableView->resizeColumnsToContents();
+
 }
 void MainWindow::initiazeTreeView()
 {
@@ -178,11 +193,6 @@ void MainWindow::initiazeTreeView()
     ui->treeView->setEditTriggers(QTreeView::NoEditTriggers);
     ui->treeView->setIndentation(10);
 
-    // 样式设置（精简版）
-    ui->treeView->setStyleSheet(
-        "QTreeView { background: white; border: none; }"
-        "QTreeView::item { height: 35px; padding-left: 15px; }"
-    );
 
     // 创建根节点
     QStandardItem *rootItem = new QStandardItem(QIcon(":/img/co.png"), "数据库连接");
@@ -215,12 +225,12 @@ void MainWindow::loadSavedConnections(QStandardItem *parentItem)
     foreach (const QString &connName, groups) {
         settings.beginGroup(connName);
 
-        // 使用默认连接图标（未连接状态）
-        QStandardItem *connItem = new QStandardItem(QIcon(":/img/connection.png"), connName);
+        // 创建连接项
+        QStandardItem *connItem = new QStandardItem(connName);
         connItem->setData(connName, Qt::UserRole + 1);
         connItem->setData("connection", Qt::UserRole + 2);
 
-        // 添加连接信息提示（显示未连接状态）
+        // 添加连接信息提示
         QString tooltip = QString("主机: %1\n端口: %2\n用户: %3\n状态: 未连接")
                             .arg(settings.value("host").toString())
                             .arg(settings.value("port").toString())
@@ -231,7 +241,6 @@ void MainWindow::loadSavedConnections(QStandardItem *parentItem)
         settings.endGroup();
     }
 
-    // 如果没有连接，显示提示信息
     if (groups.isEmpty()) {
         QStandardItem *emptyItem = new QStandardItem("暂无连接配置");
         emptyItem->setEnabled(false);
@@ -242,31 +251,113 @@ void MainWindow::loadSavedConnections(QStandardItem *parentItem)
 void MainWindow::onConnectionDoubleClicked(const QModelIndex &index)
 {
     QStandardItem *item = treeModel->itemFromIndex(index);
+    if (!item) return;
 
-    // 只处理连接项（不是根节点或其他项）
-    if (!item || !item->parent() || item->parent()->text() != "数据库连接") {
-        return;
+    QString itemType = item->data(Qt::UserRole + 2).toString();
+
+    if (itemType == "connection") {
+        // 处理连接项
+        QString connName = item->text();
+        qDebug() << "双击连接项:" << connName;
+
+        if (item->rowCount() > 0) {
+            // 切换展开/折叠状态
+            if (ui->treeView->isExpanded(index)) {
+                ui->treeView->collapse(index);
+            } else {
+                ui->treeView->expand(index);
+            }
+        } else {
+            // 首次连接
+            connectToDatabase(connName);
+        }
     }
-
-    QString connName = item->text();
-    qDebug() << "双击连接项:" << connName;
-
-    // 检查是否已经展开（有子项）
-    if (item->rowCount() > 0) {
-        // 如果已经有子项，只是切换展开/折叠状态
+    else if (itemType == "database" || itemType == "category") {
+        // 处理数据库项和分类项
         if (ui->treeView->isExpanded(index)) {
             ui->treeView->collapse(index);
-            qDebug() << "折叠连接项:" << connName;
         } else {
             ui->treeView->expand(index);
-            qDebug() << "展开连接项:" << connName;
         }
-    } else {
-        // 如果没有子项，说明是第一次点击，需要加载数据库
-        qDebug() << "首次连接:" << connName;
+    }
+    else if (itemType == "table") {
+        // 处理表项 - 显示表数据
+        QStandardItem *tableItem = item;
+        QStandardItem *tablesItem = tableItem->parent();
+        QStandardItem *dbItem = tablesItem ? tablesItem->parent() : nullptr;
+        QStandardItem *connItem = dbItem ? dbItem->parent() : nullptr;
 
-        // 执行数据库连接并加载数据库列表
-        connectToDatabase(connName);
+        if (!dbItem || !connItem) return;
+
+        QString connName = connItem->text();
+        QString dbName = dbItem->text();
+        QString tableName = tableItem->text();
+
+        // 获取数据库连接
+        QSqlDatabase db = QSqlDatabase::database(connName);
+        if (!db.isOpen()) {
+            QMessageBox::warning(this, "错误", "数据库连接已断开");
+            return;
+        }
+
+        // 确保使用正确的数据库
+        db.setDatabaseName(dbName);
+        if (!db.open()) {
+            QMessageBox::critical(this, "错误", "无法打开数据库: " + db.lastError().text());
+            return;
+        }
+
+        // 清理旧模型
+        if (ui->tableView->model()) {
+            delete ui->tableView->model();
+        }
+
+        // 创建新的数据模型
+        QSqlTableModel *model = new QSqlTableModel(this, db);
+        model->setTable(tableName);
+        model->setEditStrategy(QSqlTableModel::OnRowChange);
+
+        // 加载数据
+        if (!model->select()) {
+            QMessageBox::critical(this, "错误", "无法加载表数据: " + model->lastError().text());
+            delete model;
+            return;
+        }
+
+        // 设置到tableView
+        ui->tableView->setModel(model);
+        ui->tableView->resizeColumnsToContents();
+//        setTableStyle();
+        // 在这里添加表格样式设置
+        ui->tableView->setStyleSheet(
+            "QTableView {"
+            "    background-color: #ffffff;"
+            "    alternate-background-color: #f5f9ff;"  /* 浅蓝色交替行 */
+            "    gridline-color: #e0e0e0;"
+            "    border: none;"
+            "    font-size: 12px;"
+            "}"
+            "QTableView::item {"
+            "    padding: 6px;"
+            "    border-bottom: 1px solid #f0f0f0;"  /* 项之间的分隔线 */
+            "}"
+            "QTableView::item:selected {"
+            "    background-color: #e6f2ff;"
+            "    color: #0066cc;"
+            "}"
+            "QHeaderView::section {"
+            "    background-color: #f8f8f8;"  /* 表头背景色 */
+            "    padding: 6px;"
+            "    border: 1px solid #e0e0e0;"  /* 表头边框 */
+            "}"
+        );
+
+        // 启用交替行颜色
+        ui->tableView->setAlternatingRowColors(true);
+
+        // 调整列宽
+        ui->tableView->resizeColumnsToContents();
+        qDebug() << "显示表数据:" << dbName << "." << tableName;
     }
 }
 
@@ -296,41 +387,70 @@ void MainWindow::connectToDatabase(const QString &connName)
     // 连接成功，更新UI状态
     QStandardItem *connItem = findConnectionItem(connName);
     if (connItem) {
-        connItem->setIcon(QIcon(":/img/connection_active.png"));
-
-        // 更新工具提示显示已连接状态
+        // 更新连接状态
         QString newTooltip = connItem->toolTip().replace("状态: 未连接", "状态: 已连接 ✓");
         connItem->setToolTip(newTooltip);
 
-        // 关键修复：检查是否已经加载过数据库，避免重复添加
-        if (connItem->rowCount() == 0) { // 只有当没有子项时才加载
-            // 加载所有数据库（根据图片显示有多个数据库）
+        // 检查是否已经加载过数据库
+        if (connItem->rowCount() == 0) {
+            // 加载所有数据库
             QSqlQuery query(db);
             if (query.exec("SHOW DATABASES")) {
                 while (query.next()) {
                     QString dbName = query.value(0).toString();
 
                     // 创建数据库项
-                    QStandardItem *dbItem = new QStandardItem(QIcon(":/img/database.png"), dbName);
+                    QStandardItem *dbItem = new QStandardItem(QIcon(":/img/databaseclose.png"), dbName);
                     dbItem->setData(dbName, Qt::UserRole + 1);
                     dbItem->setData("database", Qt::UserRole + 2);
 
                     connItem->appendRow(dbItem);
 
-                    // 如果是lhlist数据库，预加载其下的所有表
-                    if (dbName == "lhlist") {
-                        QSqlQuery tableQuery(db);
-                        if (tableQuery.exec(QString("SHOW TABLES FROM `%1`").arg(dbName))) {
-                            while (tableQuery.next()) {
-                                QString tableName = tableQuery.value(0).toString();
+                    // 为每个数据库添加分类标签（模仿图片中的结构）
+                    // Tables分类
+                    QStandardItem *tablesItem = new QStandardItem(QIcon(":/img/table.png"),"Tables");
+                    tablesItem->setData("category", Qt::UserRole + 2);
+                    tablesItem->setSelectable(false);
 
-                                // 创建表项
-                                QStandardItem *tableItem = new QStandardItem(QIcon(":/img/table.png"), tableName);
-                                tableItem->setData(tableName, Qt::UserRole + 1);
-                                tableItem->setData("table", Qt::UserRole + 2);
+                    // Views分类
+                    QStandardItem *viewsItem = new QStandardItem("Views");
+                    viewsItem->setData("category", Qt::UserRole + 2);
+                    viewsItem->setSelectable(false);
 
-                                dbItem->appendRow(tableItem);
-                            }
+                    // Functions分类
+                    QStandardItem *functionsItem = new QStandardItem("Functions");
+                    functionsItem->setData("category", Qt::UserRole + 2);
+                    functionsItem->setSelectable(false);
+
+                    // Queries分类
+                    QStandardItem *queriesItem = new QStandardItem("Queries");
+                    queriesItem->setData("category", Qt::UserRole + 2);
+                    queriesItem->setSelectable(false);
+
+                    // Backups分类
+                    QStandardItem *backupsItem = new QStandardItem("Backups");
+                    backupsItem->setData("category", Qt::UserRole + 2);
+                    backupsItem->setSelectable(false);
+
+                    // 添加到数据库项
+                    dbItem->appendRow(tablesItem);
+                    dbItem->appendRow(viewsItem);
+                    dbItem->appendRow(functionsItem);
+                    dbItem->appendRow(queriesItem);
+                    dbItem->appendRow(backupsItem);
+
+                    // 加载Tables分类的表数据
+                    QSqlQuery tableQuery(db);
+                    if (tableQuery.exec(QString("SHOW TABLES FROM `%1`").arg(dbName))) {
+                        while (tableQuery.next()) {
+                            QString tableName = tableQuery.value(0).toString();
+
+                            // 创建表项
+                            QStandardItem *tableItem = new QStandardItem(QIcon(":/img/table.png"),tableName);
+                            tableItem->setData(tableName, Qt::UserRole + 1);
+                            tableItem->setData("table", Qt::UserRole + 2);
+
+                            tablesItem->appendRow(tableItem);
                         }
                     }
                 }
@@ -425,9 +545,8 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event)
 {
     if (obj == ui->btn_connection) {
         if (event->type() == QEvent::Enter) {
-            // 鼠标移入，放大
             QRect startRect = ui->btn_connection->geometry();
-            QRect endRect = startRect.adjusted(-2, -2, 2, 2); // 放大 2px
+            QRect endRect = startRect.adjusted(-2, -2, 2, 2);
             QPropertyAnimation *anim = new QPropertyAnimation(ui->btn_connection, "geometry");
             anim->setDuration(150);
             anim->setEasingCurve(QEasingCurve::OutQuad);
@@ -435,9 +554,8 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event)
             anim->setEndValue(endRect);
             anim->start(QAbstractAnimation::DeleteWhenStopped);
         } else if (event->type() == QEvent::Leave) {
-            // 鼠标移出，恢复
             QRect endRect = ui->btn_connection->geometry();
-            QRect startRect = endRect.adjusted(2, 2, -2, -2); // 恢复原大小
+            QRect startRect = endRect.adjusted(2, 2, -2, -2);
             QPropertyAnimation *anim = new QPropertyAnimation(ui->btn_connection, "geometry");
             anim->setDuration(150);
             anim->setEasingCurve(QEasingCurve::OutQuad);
@@ -457,4 +575,39 @@ void MainWindow::on_btn_create_clicked()
 void MainWindow::createNewConnection()
 {
     cre->show();
+}
+void MainWindow::setTableStyle()
+{
+    QSqlTableModel *model = dbManager->getModel("lhbom");
+    ui->tableView->setModel(model);
+
+    // 在这里添加表格样式设置
+    ui->tableView->setStyleSheet(
+        "QTableView {"
+        "    background-color: #ffffff;"
+        "    alternate-background-color: #f5f9ff;"  /* 浅蓝色交替行 */
+        "    gridline-color: #e0e0e0;"
+        "    border: none;"
+        "    font-size: 12px;"
+        "}"
+        "QTableView::item {"
+        "    padding: 6px;"
+        "    border-bottom: 1px solid #f0f0f0;"  /* 项之间的分隔线 */
+        "}"
+        "QTableView::item:selected {"
+        "    background-color: #e6f2ff;"
+        "    color: #0066cc;"
+        "}"
+        "QHeaderView::section {"
+        "    background-color: #f8f8f8;"  /* 表头背景色 */
+        "    padding: 6px;"
+        "    border: 1px solid #e0e0e0;"  /* 表头边框 */
+        "}"
+    );
+
+    // 启用交替行颜色
+    ui->tableView->setAlternatingRowColors(true);
+
+    // 调整列宽
+    ui->tableView->resizeColumnsToContents();
 }

@@ -15,7 +15,6 @@ int main(int argc, char *argv[]) {
         qDebug() << "Failed to load QSS:" << qssFile.errorString(); // 打印错误
     }
     MainWindow w;
-//    w.resize(1000, 500);
     w.show();
     return a.exec();
 }
