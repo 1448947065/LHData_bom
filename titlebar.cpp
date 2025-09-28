@@ -79,6 +79,7 @@ void TitleBar::mouseDoubleClickEvent(QMouseEvent *e) {
     }
     QWidget::mouseDoubleClickEvent(e);
 }
+
 void TitleBar::syncMaxButton(bool isMaximized)
 {
     if (isMaximized) {

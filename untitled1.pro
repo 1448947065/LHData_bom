@@ -12,6 +12,8 @@ SOURCES += \
     btnstyle.cpp \
     connection.cpp \
     createdatabase.cpp \
+    deldatabase.cpp \
+    exportinsert.cpp \
     lhxlsx.cpp \
     main.cpp \
     mainwindow.cpp \
@@ -22,6 +24,8 @@ HEADERS += \
     btnstyle.h \
     connection.h \
     createdatabase.h \
+    deldatabase.h \
+    exportinsert.h \
     lhxlsx.h \
     mainwindow.h \
     mysql.h \
@@ -30,6 +34,8 @@ HEADERS += \
 FORMS += \
     connection.ui \
     createdatabase.ui \
+    deldatabase.ui \
+    exportinsert.ui \
     mainwindow.ui
 
 # QMAKE_CFLAGS  += /utf-8

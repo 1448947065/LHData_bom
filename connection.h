@@ -5,6 +5,7 @@
 #include <QDebug>
 #include <QSettings>
 #include <QFileInfo>
+#include <QMessageBox>
 namespace Ui {
 class Connection;
 }
@@ -29,6 +30,7 @@ protected:
 
 signals:
     void sig_dbInfo(QString, QString, quint16, QString, QString, bool, bool);
+    void savedConnection(const QString &configName);
 private:
     Ui::Connection *ui;
     QString connection_name;

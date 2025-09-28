@@ -6,6 +6,7 @@
 #include <QDateTime>
 #include <QSqlTableModel>
 #include <connection.h>
+//#include <exportinsert.h>
 #include "xlsxdocument.h"
 #include "xlsxchartsheet.h"
 #include "xlsxcellrange.h"
@@ -17,8 +18,9 @@
 #include <QtSql/QSqlError>
 namespace Ui {
 class MySql;
-}
 
+}
+class ExportInsert;
 class MySql : public QWidget
 {
     Q_OBJECT
@@ -34,18 +36,21 @@ public:
     QString manufacturer;
     QDateTime createdAt;
     QDateTime updatedAt;
-    bool initializeDatabase(const QVector<QVector<QString>> columnData);
+    bool initializeDatabase(const QString &cnName, const QString &DataBaseName, const QString &host, const QString &user,
+                                   const QString userpwd, const QVector<QVector<QString>> &columnData);
     int insertDatabase();
     QSqlTableModel* getModel(const QString &tableName);
 public slots:
     void handleDbInfo(const QString &connName, const QString &host,
                      quint16 port, const QString &user, const QString &pwd,
                      bool savePwd, bool saveConfig);
+signals:
+    void progressChanged(int current, int total, bool finished, bool ok, const QString &msg);
 private:
     int row = 1;
     int col = 1;
     QSqlDatabase db;
-//    Connection* cmysql = new Connection(this);
+
 protected:
     void recv_excel();
     void connectDatabase(const QString &connName, const QString &host,

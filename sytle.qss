@@ -6,13 +6,6 @@
     background-color: #b6bcbebd;
 }
 
-QStatusBar{
-      background:white;
-      color:black;
-      min-height: 36px;      /* 改这里：期望的高度 */
-      padding: 4px 12px;     /* 内边距也能“撑高” */
-}
-
 /* 树状视图 - 白色背景加浅灰边框 */
 QTreeView {
     background-color: #ffffff;
@@ -45,6 +38,7 @@ QTreeView::item:selected {
 QTreeView::item:hover {
     background-color: #f0f7ff;
 }
+
 QTableView {
     background-color: #ffffff;
     alternate-background-color: #f0f8ff; /* 浅蓝色交替行 */
@@ -58,25 +52,48 @@ QWidget#TopTabsBar QPushButton {
 QWidget#TopTabsBar QPushButton:checked {
     color:#202124; font-weight:600;
 }
-/* 只作用于名为 btn_sql_mar 的按钮 */
+/* 数据库按钮样式 */
 QPushButton#btn_sql_mar {
-    background: transparent;   /* 背景透明 */
-    border: none;              /* 去边框 */
-    color: #000;               /* 字体黑色 */
-    font-size: 20pt;           /* 比常见的 12pt 大一号，按需改 13pt/14px */
-    padding: 4px 8px;          /* 可选：留点内边距更好看 */
-}
-QPushButton#btn_bom {
-    background: transparent;   /* 背景透明 */
-    border: none;              /* 去边框 */
-    color: #000;               /* 字体黑色 */
-    font-size: 20pt;           /* 比常见的 12pt 大一号，按需改 13pt/14px */
-    padding: 4px 8px;          /* 可选：留点内边距更好看 */
+    background: transparent;
+    border: none;
+    color: #000000;
+    font-size: 20pt;
+    padding: 4px 8px;
+    border-radius: 8px;
 }
 
-/* 悬停/按下/选中时也保持透明，不被全局样式染色 */
-QPushButton#btn_sql_mar:hover,
-QPushButton#btn_sql_mar:pressed,
-QPushButton#btn_sql_mar:checked {
+QPushButton#btn_sql_mar:hover {
+    background-color: #6e89a8ff;  /* 浅绿色背景 */
+    color: #2e7d32;            /* 深绿色文字 */
+    border: 2px solid #7a7f9cff;
+}
+
+QPushButton#btn_sql_mar:pressed {
+    background-color: #d4eed4;
+    color: #1b5e20;
+}
+
+/* 双清单管理工具按钮样式 */
+QPushButton#btn_bom {
     background: transparent;
+    border: none;
+    color: #000000;
+    font-size: 20pt;
+    padding: 4px 8px;
+    border-radius: 8px;
+}
+
+QPushButton#btn_bom:hover {
+    background-color: #262426ff !important;  /* 浅紫色背景 */
+    color: #7b1fa5 !important;           /* 深紫色文字 */
+    border: 1px solid #e1bee7 !important;   /* 紫色边框 */
+}
+QPushButton#btn_bom:pressed {
+    background-color: #ead6ee;
+    color: #6a1b9a;
+}
+
+QPushButton:hover {
+    /* 鼠标停留状态 */
+    background-color: #666;
 }

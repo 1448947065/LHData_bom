@@ -17,24 +17,30 @@ Connection::~Connection()
 
 void Connection::on_btn_ok_clicked()
 {
-    connection_name = ui->line_con_name->text();
-    host = ui->line_host->text();
-    port = ui->line_port->text().toInt();
-    User_Name = ui->line_user_name->text();
-    password = ui->line_password->text();
-    save_passwd = ui->check_passwd->isChecked();
-    save_config = ui->check_con->isChecked();
-    qDebug()<<connection_name<<host<<port<<User_Name<<password<<save_passwd<<save_config;
-    qDebug() << "=== 信号发射前 ===";
-    if (save_config) {
-        saveConfigtoIni(connection_name,host, port,
-                        User_Name, password,save_passwd, save_config);
+    connection_name = ui->line_con_name->text().trimmed();
+    host           = ui->line_host->text().trimmed();
+    port           = ui->line_port->text().toInt();
+    User_Name      = ui->line_user_name->text().trimmed();
+    password       = ui->line_password->text();
+    save_passwd    = ui->check_passwd->isChecked();
+    save_config    = ui->check_con->isChecked();
+
+    if (connection_name.isEmpty() || host.isEmpty() || port <= 0 || User_Name.isEmpty()) {
+        QMessageBox::warning(this, "提示", "请完整填写连接信息。");
+        return;
     }
-    emit sig_dbInfo(connection_name,host, port,
-                    User_Name, password, save_passwd, save_config);
-    qDebug() << "=== 信号发射后 ===";
-    qApp->processEvents();  // 强制立即处理
+
+    if (save_config) {
+        saveConfigtoIni(connection_name, host, port, User_Name, password, save_passwd, save_config);
+        emit savedConnection(connection_name);  // ★ 通知主窗口刷新左侧树
+    }
+
+    // 你原来的业务信号，保留
+    emit sig_dbInfo(connection_name, host, port, User_Name, password, save_passwd, save_config);
+
+    close(); // 这是 QWidget，不是 QDialog，用 close() 即可
 }
+
 
 void Connection::saveConfigtoIni(const QString &configName,
                                  const QString &host, quint16 port,
@@ -47,17 +53,12 @@ void Connection::saveConfigtoIni(const QString &configName,
     settings.setValue("host", host);
     settings.setValue("port", port);
     settings.setValue("user", user);
-
-    if (savePwd) {
-        settings.setValue("password", pwd);
-    } else {
-        settings.remove("password");
-    }
-
+    if (savePwd) settings.setValue("password", pwd); else settings.remove("password");
     settings.setValue("savePwd", savePwd);
     settings.setValue("saveConfig", saveConfig);
     settings.endGroup();
 
+    settings.sync();  // ★ 关键：确保立刻写入磁盘
     qDebug() << "配置已保存到config.ini";
 }
 

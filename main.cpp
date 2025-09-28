@@ -6,7 +6,7 @@
 #define DPI_ENABLE 1
 int main(int argc, char *argv[]) {
     QApplication a(argc, argv);
-    QFile qssFile("D:\\work project\\sql\\untitled1\\sytle.qss");
+    QFile qssFile(":/sytle.qss");
     if (qssFile.open(QFile::ReadOnly)) {
         QString styleSheet = qssFile.readAll();
         a.setStyleSheet(styleSheet);

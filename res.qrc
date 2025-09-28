@@ -8,6 +8,11 @@
         <file>img/cha.png</file>
         <file>img/databaseclose.png</file>
         <file>img/table.png</file>
+        <file>img/export.png</file>
+        <file>img/mysql.png</file>
+        <file>img/cmysql.png</file>
+        <file>img/databaseopen.png</file>
+        <file>sytle.qss</file>
     </qresource>
     <qresource prefix="/ini"/>
 </RCC>
