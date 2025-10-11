@@ -57,7 +57,7 @@ QPushButton#btn_sql_mar {
     background: transparent;
     border: none;
     color: #000000;
-    font-size: 20pt;
+    font-size: 16pt;
     padding: 4px 8px;
     border-radius: 8px;
 }
@@ -78,7 +78,7 @@ QPushButton#btn_bom {
     background: transparent;
     border: none;
     color: #000000;
-    font-size: 20pt;
+    font-size: 16pt;
     padding: 4px 8px;
     border-radius: 8px;
 }
@@ -89,6 +89,29 @@ QPushButton#btn_bom:hover {
     border: 1px solid #e1bee7 !important;   /* 紫色边框 */
 }
 QPushButton#btn_bom:pressed {
+    background-color: #ead6ee;
+    color: #6a1b9a;
+}
+
+QPushButton:hover {
+    /* 鼠标停留状态 */
+    background-color: #666;
+}
+
+QPushButton#btn_hyper {
+    background: transparent;
+    border: none;
+    color: #000000;
+    font-size: 16pt ;
+    padding: 4px 8px;
+    border-radius: 8px;
+}
+QPushButton#btn_hyper:hover {
+    background-color: #262426ff !important;  /* 浅紫色背景 */
+    color: #7b1fa5 !important;           /* 深紫色文字 */
+    border: 1px solid #e1bee7 !important;   /* 紫色边框 */
+}
+QPushButton#btn_hyper:pressed {
     background-color: #ead6ee;
     color: #6a1b9a;
 }

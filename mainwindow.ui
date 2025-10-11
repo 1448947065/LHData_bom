@@ -69,6 +69,29 @@
        </widget>
       </item>
       <item>
+       <spacer name="horizontalSpacer_4">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>40</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item>
+       <widget class="QPushButton" name="btn_hyper">
+        <property name="styleSheet">
+         <string notr="true"/>
+        </property>
+        <property name="text">
+         <string>1</string>
+        </property>
+       </widget>
+      </item>
+      <item>
        <spacer name="horizontalSpacer_3">
         <property name="orientation">
          <enum>Qt::Horizontal</enum>
@@ -215,7 +238,7 @@
     <item row="2" column="1">
      <widget class="QStackedWidget" name="stackedWidget">
       <property name="currentIndex">
-       <number>0</number>
+       <number>1</number>
       </property>
       <widget class="QWidget" name="page">
        <property name="styleSheet">
@@ -230,8 +253,8 @@
           <property name="spacing">
            <number>0</number>
           </property>
-          <item row="0" column="0">
-           <widget class="QPushButton" name="btn_connection">
+          <item row="0" column="8">
+           <widget class="QPushButton" name="btn_search">
             <property name="styleSheet">
              <string notr="true">QPushButton:hover {
     background-color: rgb(0, 255, 255);
@@ -260,8 +283,8 @@ QPushButton:pressed {
             </property>
            </widget>
           </item>
-          <item row="0" column="4">
-           <widget class="QPushButton" name="btn_del">
+          <item row="0" column="0">
+           <widget class="QPushButton" name="btn_connection">
             <property name="styleSheet">
              <string notr="true">QPushButton:hover {
     background-color: rgb(0, 255, 255);
@@ -272,127 +295,6 @@ QPushButton:pressed {
             </property>
             <property name="text">
              <string/>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="7">
-           <spacer name="horizontalSpacer_7">
-            <property name="orientation">
-             <enum>Qt::Horizontal</enum>
-            </property>
-            <property name="sizeType">
-             <enum>QSizePolicy::Minimum</enum>
-            </property>
-            <property name="sizeHint" stdset="0">
-             <size>
-              <width>40</width>
-              <height>20</height>
-             </size>
-            </property>
-           </spacer>
-          </item>
-          <item row="1" column="8">
-           <widget class="QLabel" name="label_2">
-            <property name="text">
-             <string> Ask</string>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="17">
-           <widget class="QLabel" name="lab_post">
-            <property name="text">
-             <string/>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="3">
-           <spacer name="horizontalSpacer_5">
-            <property name="orientation">
-             <enum>Qt::Horizontal</enum>
-            </property>
-            <property name="sizeType">
-             <enum>QSizePolicy::Minimum</enum>
-            </property>
-            <property name="sizeHint" stdset="0">
-             <size>
-              <width>40</width>
-              <height>20</height>
-             </size>
-            </property>
-           </spacer>
-          </item>
-          <item row="1" column="4">
-           <widget class="QLabel" name="label_7">
-            <property name="text">
-             <string>delete</string>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="8">
-           <widget class="QPushButton" name="btn_search">
-            <property name="styleSheet">
-             <string notr="true">QPushButton:hover {
-    background-color: rgb(0, 255, 255);
-}
-QPushButton:pressed {
-    background-color: rgb(240, 240, 240);
-}</string>
-            </property>
-            <property name="text">
-             <string/>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="5">
-           <spacer name="horizontalSpacer_6">
-            <property name="orientation">
-             <enum>Qt::Horizontal</enum>
-            </property>
-            <property name="sizeType">
-             <enum>QSizePolicy::Minimum</enum>
-            </property>
-            <property name="sizeHint" stdset="0">
-             <size>
-              <width>40</width>
-              <height>20</height>
-             </size>
-            </property>
-           </spacer>
-          </item>
-          <item row="0" column="1">
-           <spacer name="horizontalSpacer_2">
-            <property name="orientation">
-             <enum>Qt::Horizontal</enum>
-            </property>
-            <property name="sizeType">
-             <enum>QSizePolicy::Minimum</enum>
-            </property>
-            <property name="sizeHint" stdset="0">
-             <size>
-              <width>40</width>
-              <height>20</height>
-             </size>
-            </property>
-           </spacer>
-          </item>
-          <item row="1" column="2">
-           <widget class="QLabel" name="label_6">
-            <property name="text">
-             <string>create</string>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="6">
-           <widget class="QLabel" name="label_8">
-            <property name="text">
-             <string>change</string>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="0">
-           <widget class="QLabel" name="label">
-            <property name="text">
-             <string> Link</string>
             </property>
            </widget>
           </item>
@@ -408,28 +310,6 @@ QPushButton:pressed {
             </property>
             <property name="text">
              <string/>
-            </property>
-           </widget>
-          </item>
-          <item row="2" column="0" colspan="24">
-           <widget class="QTableView" name="tableView"/>
-          </item>
-          <item row="0" column="20" rowspan="2">
-           <widget class="QPushButton" name="btn_serach_tab">
-            <property name="styleSheet">
-             <string notr="true">background:rgb(85, 255, 255)              
-
-</string>
-            </property>
-            <property name="text">
-             <string>🔍serch</string>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="10">
-           <widget class="QLabel" name="label_3">
-            <property name="text">
-             <string>export</string>
             </property>
            </widget>
           </item>
@@ -452,22 +332,6 @@ QPushButton:pressed {
             </property>
            </widget>
           </item>
-          <item row="0" column="9">
-           <spacer name="horizontalSpacer_11">
-            <property name="orientation">
-             <enum>Qt::Horizontal</enum>
-            </property>
-            <property name="sizeType">
-             <enum>QSizePolicy::Minimum</enum>
-            </property>
-            <property name="sizeHint" stdset="0">
-             <size>
-              <width>40</width>
-              <height>20</height>
-             </size>
-            </property>
-           </spacer>
-          </item>
           <item row="0" column="10">
            <widget class="QPushButton" name="btn_export">
             <property name="styleSheet">
@@ -482,6 +346,39 @@ QPushButton:pressed {
              <string/>
             </property>
            </widget>
+          </item>
+          <item row="1" column="0">
+           <widget class="QLabel" name="label">
+            <property name="text">
+             <string> Link</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="8">
+           <widget class="QLabel" name="label_2">
+            <property name="text">
+             <string> Ask</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="7">
+           <spacer name="horizontalSpacer_7">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeType">
+             <enum>QSizePolicy::Minimum</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+          <item row="2" column="0" colspan="24">
+           <widget class="QTableView" name="tableView"/>
           </item>
           <item row="0" column="19" rowspan="2">
            <spacer name="horizontalSpacer">
@@ -499,8 +396,112 @@ QPushButton:pressed {
             </property>
            </spacer>
           </item>
+          <item row="1" column="2">
+           <widget class="QLabel" name="label_6">
+            <property name="text">
+             <string>create</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="1">
+           <spacer name="horizontalSpacer_2">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeType">
+             <enum>QSizePolicy::Minimum</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+          <item row="1" column="6">
+           <widget class="QLabel" name="label_8">
+            <property name="text">
+             <string>change</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="5">
+           <spacer name="horizontalSpacer_6">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeType">
+             <enum>QSizePolicy::Minimum</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+          <item row="1" column="10">
+           <widget class="QLabel" name="label_3">
+            <property name="text">
+             <string>export</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="20" rowspan="2">
+           <widget class="QPushButton" name="btn_serach_tab">
+            <property name="styleSheet">
+             <string notr="true">background:rgb(85, 255, 255)              
+
+</string>
+            </property>
+            <property name="text">
+             <string>🔍serch</string>
+            </property>
+           </widget>
+          </item>
           <item row="0" column="21" rowspan="2">
            <spacer name="horizontalSpacer_18">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeType">
+             <enum>QSizePolicy::Minimum</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+          <item row="0" column="3">
+           <spacer name="horizontalSpacer_5">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeType">
+             <enum>QSizePolicy::Minimum</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+          <item row="0" column="17">
+           <widget class="QLabel" name="lab_post">
+            <property name="text">
+             <string/>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="9">
+           <spacer name="horizontalSpacer_11">
             <property name="orientation">
              <enum>Qt::Horizontal</enum>
             </property>
@@ -530,6 +531,28 @@ QPushButton:pressed {
              </size>
             </property>
            </spacer>
+          </item>
+          <item row="1" column="4">
+           <widget class="QLabel" name="label_7">
+            <property name="text">
+             <string>delete</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="4">
+           <widget class="QPushButton" name="btn_del">
+            <property name="styleSheet">
+             <string notr="true">QPushButton:hover {
+    background-color: rgb(0, 255, 255);
+}
+QPushButton:pressed {
+    background-color: rgb(240, 240, 240);
+}</string>
+            </property>
+            <property name="text">
+             <string/>
+            </property>
+           </widget>
           </item>
          </layout>
         </item>

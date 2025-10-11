@@ -26,6 +26,7 @@
 #include <createdatabase.h>
 #include <deldatabase.h>
 #include <exportinsert.h>
+#include "dialog.h"
 //class
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -79,6 +80,7 @@ protected:
     bool deleteConnection(const QString &connName);
 private:
     Ui::MainWindow *ui;
+    Dialog *dialog = new Dialog(this);
     Connection *con = new Connection;
     CreateDatabase *cre = new CreateDatabase;
     DelDataBase *delui = new DelDataBase;

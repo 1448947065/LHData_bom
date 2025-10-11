@@ -20,6 +20,7 @@ ExportInsert::ExportInsert(QWidget *parent) :
     });
     ui->progressBar->setValue(0);
 }
+
 ExportInsert::~ExportInsert()
 {
     delete ui;
@@ -82,18 +83,15 @@ void ExportInsert::on_buttonBox_accepted()
             columnData[col-1][row-1] = value;
         }
     }
-
-    // 从界面输入框里拿连接名（比如 "lhlist" 或 "rk3588"）
     QString connName = ui->line_cnName->text().trimmed();
     QString dbName   = ui->line_dbName->text().trimmed();
-    // 从 ini 里读配置
+
     DbConfig cfg = readDbConfig(connName);
     if (cfg.user.isEmpty()) {
         qDebug() << "错误：config.ini 中没有找到连接名" << connName;
         return;
     }
 
-    // 发信号出去
     emit mysqlCreate(
         connName,
         dbName,
@@ -102,7 +100,7 @@ void ExportInsert::on_buttonBox_accepted()
         cfg.password,
         columnData
     );
-
+    this->setResult(QDialog::Rejected);
     qDebug() << "配置读取成功:"
              << "host=" << cfg.host
              << "port=" << cfg.port

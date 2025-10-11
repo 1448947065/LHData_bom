@@ -13,6 +13,7 @@ SOURCES += \
     connection.cpp \
     createdatabase.cpp \
     deldatabase.cpp \
+    dialog.cpp \
     exportinsert.cpp \
     lhxlsx.cpp \
     main.cpp \
@@ -25,6 +26,7 @@ HEADERS += \
     connection.h \
     createdatabase.h \
     deldatabase.h \
+    dialog.h \
     exportinsert.h \
     lhxlsx.h \
     mainwindow.h \
@@ -35,6 +37,7 @@ FORMS += \
     connection.ui \
     createdatabase.ui \
     deldatabase.ui \
+    dialog.ui \
     exportinsert.ui \
     mainwindow.ui
 
