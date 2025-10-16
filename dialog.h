@@ -4,7 +4,7 @@
 #include <QDialog>
 #include <QtXlsx>
 #include <QMessageBox>
-#include <QtSql/QSqlDatabase>
+#include <QSqlDatabase>
 #include <QSqlQuery>
 #include <QDebug>
 #include <QtXlsx>
@@ -16,6 +16,7 @@
 #include <QDebug>
 #include <QtCore>
 #include <QtGlobal>
+#include "mysql.h"
 
 namespace Ui {
 class Dialog;
@@ -28,6 +29,10 @@ class Dialog : public QDialog
 public:
     explicit Dialog(QWidget *parent = nullptr);
     ~Dialog();
+signals:
+    void sig_select();
+
+
 
 private slots:
     void on_btn_openbom_clicked();
@@ -40,6 +45,8 @@ private slots:
 
     void on_btn_refresh_clicked();
 
+    void on_btn_str_clicked();
+
 private:
     Ui::Dialog *ui;
     QString bomFileFullName, bomFileFullName1, bomFileFullName2;
@@ -50,15 +57,8 @@ private:
     bool checkManuFlag;
     bool checkDosageFlag;
     bool fillinManuFlag;
-
+    MySql *m_sql = new MySql(this);
+    QString m_connName;
 };
-
-//class TimeoutMessageBox : public QMessageBox
-//{
-//    Q_OBJECT
-//public:
-//    explicit TimeoutMessageBox(QMessageBox *parent = nullptr);
-//    ~TimeoutMessageBox();
-//};
 
 #endif // DIALOG_H

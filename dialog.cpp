@@ -1,7 +1,6 @@
 ﻿#include "dialog.h"
 #include "ui_dialog.h"
 
-//#pragma execution_character_set("utf-8")
 Dialog::Dialog(QWidget *parent) :
     QDialog(parent),
     ui(new Ui::Dialog)
@@ -10,6 +9,7 @@ Dialog::Dialog(QWidget *parent) :
 
     mat = nullptr;
     bom = nullptr;
+    //QXlsx::Document xlsx;
     ui->cmb_sheetbom->setDisabled(true);
     ui->cmb_sheetmat->setDisabled(true);
     ui->btn_comp->setDisabled(true);
@@ -18,15 +18,14 @@ Dialog::Dialog(QWidget *parent) :
     ui->label_5->setFixedSize(110, 22);
     ui->cmb_sheetbom->setFixedSize(160, 28);
     ui->cmb_sheetmat->setFixedSize(160, 28);
+    //ui->lb_pathbom->setFixedSize(363, 14);
     checkManuFlag = false;
     checkDosageFlag = false;
     fillinManuFlag = false;
-
 }
-
 Dialog::~Dialog()
 {
-    delete ui;
+//    delete ui;
 }
 void Dialog::resizeEvent(QResizeEvent *event) {
     QDialog::resizeEvent(event);
@@ -42,10 +41,10 @@ void Dialog::resizeEvent(QResizeEvent *event) {
 
 void Dialog::on_btn_comp_clicked()
 {
-    if (!bom || !mat) {
-        QMessageBox::warning(this, tr("双清单生成工具"), tr("请先加载BOM和物料清单文件。"));
-        return;
-    }
+//    if (!bom || !mat) {
+//        QMessageBox::warning(this, tr("双清单生成工具"), tr("请先加载BOM和物料清单文件。"));
+//        return;
+//    }
 
     QString selectedSheet = ui->cmb_sheetbom->currentText();
     if (selectedSheet.isEmpty()) {
@@ -59,6 +58,7 @@ void Dialog::on_btn_comp_clicked()
         return;
     }
 
+    // 获取 BOM 表中的制造商列
     int bomManufacturerCol = -1;
     for (int col = 1; col <= bomSheet->dimension().columnCount(); ++col) {
         QString header = bomSheet->read(1, col).toString().trimmed();
@@ -196,6 +196,8 @@ void Dialog::on_btn_comp_clicked()
     for (int bomRow = startRow; bomRow <= bomRowCount; ++bomRow) {
         QString partNumber = bomSheet->read(bomRow, 3).toString().trimmed();
         if (partNumber.isEmpty()) continue;
+
+        // 查找物料清单表中匹配的行
         int matchedMatRow = -1;
         for (int matRow = 2; matRow <= matRowCount; ++matRow) {
             if (matSheet->read(matRow, 2).toString().trimmed() == partNumber) {
@@ -204,62 +206,59 @@ void Dialog::on_btn_comp_clicked()
             }
         }
 
-         // 处理每一列
-         for (int col = 1; col <= matColCount; ++col) {
-             QVariant value;
-             QXlsx::Format cellFormat = specialColumnFormat;
+     // 处理每一列
+     for (int col = 1; col <= matColCount; ++col) {
+         QVariant value;
+         QXlsx::Format cellFormat = specialColumnFormat;
 
-             if (col == 1) {
-                 // 序号列
-                 value = serialNumber;
-                 cellFormat = rightAlignFormat;
+         if (col == 1) {
+             // 序号列
+             value = serialNumber;
+             cellFormat = rightAlignFormat;
+         }
+         else if (matchedMatRow != -1) {
+             // 匹配的行 - 完全按照您注释中的原始逻辑处理
+             const QVector<QVariant>& rowData = matData[partNumber];
+
+             if (col >= 2 && col <= 5) {
+                 value = rowData[col-1];
+                 cellFormat = specialLeftAlignFormat;
              }
-             else if (matchedMatRow != -1) {
-                 const QVector<QVariant>& rowData = matData[partNumber];
-
-                 if (col >= 2 && col <= 5) {
-                     value = rowData[col-1];
-                     cellFormat = specialLeftAlignFormat;
-                 }
-                 else if (col == producerCol) {
-                     value = rowData[producerCol-1];
-                     cellFormat = specialLeftAlignFormat;
-                 }
-                 else if (col == 9) {
-                     value = rowData[8];
-                     cellFormat = specialColumnFormat;
-                 }
-                 else if (col == 17) {
-                     QXlsx::Document xlsx(matFileFullName);
-                     value = xlsx.read(matchedMatRow, col);
-                     resultDoc.write(matchedMatRow, col, value);
-                 }
-                 else if (col == 18) {
-                     QXlsx::Document xlsx(matFileFullName);
-                     value = xlsx.read(matchedMatRow, col);
-                     resultDoc.write(matchedMatRow, col, value);
-                 }
-                 else {
-                     value = rowData[col-1];
-                     cellFormat = specialColumnFormat;
-                 }
+             else if (col == producerCol) {
+                 value = rowData[producerCol-1];
+                 cellFormat = specialLeftAlignFormat;
+             }
+             else if (col == 9) {
+                     value = rowData[8]; // 第9列（索引8）
+                 cellFormat = specialColumnFormat;
+             }
+             else if (col == 17) {
+                 // 复制匹配行的17、18列内容
+                 QXlsx::Document xlsx(matFileFullName);
+                 value = xlsx.read(matchedMatRow, col);
+                 resultDoc.write(matchedMatRow, col, value);
              }
              else {
-                 // 未匹配的行 - 只保留关键信息
-                 if (col == 2) value = partNumber;
-                 else if (col == 3) value = bomSheet->read(bomRow, 2); // 名称
-                 else if (col == 4) value = bomSheet->read(bomRow, 4); // 规格型号
-                 else if (col == 5) value = bomSheet->read(bomRow, 9);
-                 // 其他列留空
+                 value = rowData[col-1];
+                 cellFormat = specialColumnFormat;
              }
-
-             resultDoc.write(resultRow, col, value, cellFormat);
+         }
+         else {
+             // 未匹配的行 - 只保留关键信息
+             if (col == 2) value = partNumber;
+             else if (col == 3) value = bomSheet->read(bomRow, 2); // 名称
+             else if (col == 4) value = bomSheet->read(bomRow, 4); // 规格型号
+             else if (col == 5) value = bomSheet->read(bomRow, 9);
+             // 其他列留空
          }
 
-         resultDoc.setRowHeight(resultRow, 15.0);
-         resultRow++;
-         serialNumber++;
+         resultDoc.write(resultRow, col, value, cellFormat);
      }
+
+     resultDoc.setRowHeight(resultRow, 15.0);
+     resultRow++;
+     serialNumber++;
+ }
 
     // 设置列宽
     for (int col = 1; col <= matColCount; ++col) {
@@ -296,7 +295,7 @@ void Dialog::onLayoutAdjusted() {
 }
 void Dialog::on_btn_openmat_clicked()
 {
-    matFileFullName = QFileDialog::getOpenFileName(this, tr("open file"), " ",  tr("Microsoft Excel(*.xlsx)"));
+    matFileFullName = QFileDialog::getOpenFileName(this, tr("open file"), " ",  tr("Microsoft Excel(*.xlsx *.xls)"));
 
     ui->lb_pathmat->setText(matFileFullName);
     mat = new QXlsx::Document(matFileFullName);
@@ -356,36 +355,205 @@ void Dialog::on_btn_refresh_clicked()
 }
 
 
-//void Dialog::on_ckb_dosage_check_stateChanged(int arg1)
-//{
-//    if (arg1 == Qt::Checked) {
-//        checkDosageFlag = true;
-//    } else if (arg1 == Qt::Unchecked) {
-//        checkDosageFlag = false;
-//    }
-//}
 
-//void Dialog::on_ckb_fillin_manu_stateChanged(int arg1)
-//{
-//    if (arg1 == Qt::Checked) {
-//        fillinManuFlag = true;
-//    } else if (arg1 == Qt::Unchecked) {
-//        fillinManuFlag = false;
-//    }
-//}
+void Dialog::on_btn_str_clicked()
+{
+    if (!bom || !mat) {
+        QMessageBox::warning(this, tr("BOM匹配工具"), tr("请先加载BOM与主库文件。"));
+        return;
+    }
+    const QString bomSheetName = ui->cmb_sheetbom->currentText();
+    const QString matSheetName = ui->cmb_sheetmat->currentText();
+    if (bomSheetName.isEmpty() || matSheetName.isEmpty()) {
+        QMessageBox::warning(this, tr("BOM匹配工具"), tr("请先选择BOM与主库的工作表。"));
+        return;
+    }
 
-//void Dialog::on_btn_bomcomp_openbom1_clicked()
-//{
-//    bomFileFullName1 = QFileDialog::getOpenFileName(this, tr("open file"), " ", tr("Microsoft Excel(*.xlsx)"));
+    auto *bomSheet = dynamic_cast<QXlsx::Worksheet*>(bom->sheet(bomSheetName));
+    auto *matSheet = dynamic_cast<QXlsx::Worksheet*>(mat->sheet(matSheetName));
+    if (!bomSheet || !matSheet) {
+        QMessageBox::warning(this, tr("BOM匹配工具"), tr("工作表加载失败。"));
+        return;
+    }
 
-//    bom1 = new QXlsx::Document(bomFileFullName1);
-//    if (bom1) {
-//        //ui->cmb_manu->setDisabled(false);
+    auto norm = [](QString s)->QString {
+        s = s.trimmed().toLower();
+        s.replace(QChar(0x3000), QChar(' '));
+        s.remove(QRegularExpression(u8R"([（(].*?[)）])"));
+        s.replace("\n", " ").replace("\r", " ").replace("\t", " ");
+        s.remove(QRegularExpression(u8R"([：:、/,，;；\-\|])"));
+        s.remove(' ');
+        return s;
+    };
 
-//        ui->btn_refresh->setDisabled(false);
-//    }
+    auto detectHeaderRow = [](QXlsx::Worksheet *ws, int headerScanRows = 5)->int {
+        if (!ws) return 1;
+        const int rows = qMin(headerScanRows, ws->dimension().rowCount());
+        const int cols = ws->dimension().columnCount();
+        int bestRow = 1, bestCnt = -1;
+        for (int r = 1; r <= rows; ++r) {
+            int cnt = 0;
+            for (int c = 1; c <= cols; ++c) {
+                if (!ws->read(r, c).toString().trimmed().isEmpty()) ++cnt;
+            }
+            if (cnt > bestCnt) { bestCnt = cnt; bestRow = r; }
+        }
+        return bestRow;
+    };
 
-//    if (bom1 && bom2) {
-//        ui->btn_comp->setDisabled(false);
-//    }
-//}
+    auto findColRobust = [&](QXlsx::Worksheet *ws,
+                             const QStringList &candidates,
+                             int headerRow)->int {
+        if (!ws) return -1;
+        const int cols = ws->dimension().columnCount();
+
+        QStringList cand;
+        for (const auto &k : candidates) cand << norm(k);
+
+        for (int c = 1; c <= cols; ++c) {
+            const QString raw = ws->read(headerRow, c).toString();
+            if (raw.trimmed().isEmpty()) continue;
+            const QString h = norm(raw);
+
+            for (const QString &k : cand) {
+                if (h == k || h.contains(k)) {
+                    return c;
+                }
+            }
+        }
+        return -1;
+    };
+
+    const int bomHeaderRow = detectHeaderRow(bomSheet, 5);
+    const int matHeaderRow = detectHeaderRow(matSheet, 5);
+
+    const QStringList BOM_REF_ALIASES = {
+        "位号","位 号","参考位号","refdes","reference","designation"
+    };
+    const QStringList BOM_NAME_ALIASES = {
+        "名称","元器件名称","器件名称","name","description","desc","中文名称"
+    };
+    const QStringList PART_ALIASES = {
+        "料号","物料号","mpn","part","partno","partnumber","mfgpn","制造商料号"
+    };
+    const QStringList SPEC_ALIASES = {
+        "规格","规格型号","规格型号描述","参数","spec","specification","description","desc"
+    };
+    const QStringList POWER_ALIASES = {
+        "功耗","功率","power","powerconsumption"
+    };
+    const QStringList HEIGHT_ALIASES = {
+        "封装高度","高度","packageheight","height","封装厚度","厚度"
+    };
+
+    const int bomRefCol  = findColRobust(bomSheet, BOM_REF_ALIASES,  bomHeaderRow);
+    const int bomNameCol = findColRobust(bomSheet, BOM_NAME_ALIASES, bomHeaderRow);
+    const int bomPartCol = findColRobust(bomSheet, PART_ALIASES,     bomHeaderRow);
+
+    const int matPartCol   = findColRobust(matSheet, PART_ALIASES,   matHeaderRow);
+    const int matNameCol   = findColRobust(matSheet, BOM_NAME_ALIASES, matHeaderRow); // 备用
+    const int matSpecCol   = findColRobust(matSheet, SPEC_ALIASES,   matHeaderRow);
+    const int matPowerCol  = findColRobust(matSheet, POWER_ALIASES,  matHeaderRow);
+    const int matHeightCol = findColRobust(matSheet, HEIGHT_ALIASES, matHeaderRow);
+
+    auto collectHeaderRowText = [&](QXlsx::Worksheet *ws, int headerRow)->QStringList {
+        QStringList items;
+        const int cols = ws->dimension().columnCount();
+        for (int c = 1; c <= cols; ++c) {
+            const QString t = ws->read(headerRow, c).toString();
+            if (!t.trimmed().isEmpty()) items << QString("[%1]%2").arg(c).arg(t.trimmed());
+        }
+        return items;
+    };
+
+    if (bomRefCol == -1 || bomPartCol == -1) {
+        const QStringList heads = collectHeaderRowText(bomSheet, bomHeaderRow);
+        QMessageBox::warning(
+            this, tr("BOM匹配工具"),
+            tr("BOM表头中未找到必需的“位号/料号”列。\n"
+               "检测的表头行：第 %1 行\n"
+               "实际读取到的表头：\n%2")
+                .arg(bomHeaderRow)
+                .arg(heads.join('\n'))
+        );
+        return;
+    }
+    if (matPartCol == -1 || matSpecCol == -1 || matPowerCol == -1 || matHeightCol == -1) {
+        const QStringList heads = collectHeaderRowText(matSheet, matHeaderRow);
+        QMessageBox::warning(
+            this, tr("BOM匹配工具"),
+            tr("主库表头缺少必要列（料号/规格/功耗/封装高度）。\n"
+               "检测的表头行：第 %1 行\n"
+               "实际读取到的表头：\n%2")
+                .arg(matHeaderRow)
+                .arg(heads.join('\n'))
+        );
+        return;
+    }
+
+    struct MasterRow { QString name, spec, power, height; };
+    QHash<QString, MasterRow> master;
+    const int matRows = matSheet->dimension().rowCount();
+    for (int r = matHeaderRow + 1; r <= matRows; ++r) {
+        const QString part = matSheet->read(r, matPartCol).toString().trimmed();
+        if (part.isEmpty()) continue;
+        MasterRow m;
+        if (matNameCol != -1) m.name = matSheet->read(r, matNameCol).toString().trimmed();
+        m.spec   = matSheet->read(r, matSpecCol).toString().trimmed();
+        m.power  = matSheet->read(r, matPowerCol).toString().trimmed();
+        m.height = matSheet->read(r, matHeightCol).toString().trimmed();
+        master.insert(part, m);
+    }
+
+    QXlsx::Document out;
+
+    out.write(1, 1, "位号");
+    out.write(1, 2, "元器件名称");
+    out.write(1, 3, "料号");
+    out.write(1, 4, "规格");
+    out.write(1, 5, "功耗");
+    out.write(1, 6, "封装高度");
+
+    out.setColumnWidth(1, 18.0);
+    out.setColumnWidth(2, 28.0);
+    out.setColumnWidth(3, 22.0);
+    out.setColumnWidth(4, 42.0);
+    out.setColumnWidth(5, 14.0);
+    out.setColumnWidth(6, 16.0);
+
+    int outRow = 2;
+    const int bomRows = bomSheet->dimension().rowCount();
+    for (int r = bomHeaderRow + 1; r <= bomRows; ++r) {
+        const QString ref  = bomSheet->read(r, bomRefCol).toString().trimmed();
+        const QString part = bomSheet->read(r, bomPartCol).toString().trimmed();
+        if (part.isEmpty()) continue;
+
+        QString name;
+        if (bomNameCol != -1) name = bomSheet->read(r, bomNameCol).toString().trimmed();
+
+        auto it = master.constFind(part);
+        if (it == master.constEnd()) continue;
+
+        const QString finalName = name.isEmpty() ? it->name : name;
+
+        out.write(outRow, 1, ref);
+        out.write(outRow, 2, finalName);
+        out.write(outRow, 3, part);
+        out.write(outRow, 4, it->spec);
+        out.write(outRow, 5, it->power);
+        out.write(outRow, 6, it->height);
+        ++outRow;
+    }
+
+    const QString basePath = bomFileFullName.section("/", 0, -2);
+    const QString baseName = bomFileFullName.section("/", -1).section(".", 0, -2);
+    const QString ext      = "xlsx";
+    const QString ts       = QDateTime::currentDateTime().toString("yyyyMMddHHmmss");
+    const QString outPath  = basePath + "/" + baseName + "-匹配结果-" + ts + "." + ext;
+
+    if (out.saveAs(outPath)) {
+        QMessageBox::information(this, tr("BOM匹配工具"), tr("已生成文件：\n%1").arg(outPath));
+    } else {
+        QMessageBox::warning(this, tr("BOM匹配工具"), tr("保存失败，请检查路径权限。"));
+    }
+}

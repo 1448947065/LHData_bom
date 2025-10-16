@@ -8,18 +8,27 @@ ExportInsert::ExportInsert(QWidget *parent) :
     ui->setupUi(this);
     connect(this, &ExportInsert::mysqlCreate, dbManagerExport, &MySql::initializeDatabase);
     connect(dbManagerExport, &MySql::progressChanged,
-            this, [=](int cur, int total, bool finished, bool ok, const QString &msg){
+            this, [=](int cur, int total, bool finished, bool ok, const QString &msg) {
         if (!finished) {
             ui->progressBar->setRange(0, total);
             ui->progressBar->setValue(cur);
         } else {
+
             ui->progressBar->setRange(0, 100);
             ui->progressBar->setValue(100);
+
             QMessageBox::information(this, ok ? "导入完成" : "导入失败", msg);
+            ui->progressBar->setValue(0);
+
+            m_running = false;
+            finished = true;
         }
     });
+
     ui->progressBar->setValue(0);
+    m_running = false;
 }
+
 
 ExportInsert::~ExportInsert()
 {
@@ -42,11 +51,6 @@ DbConfig ExportInsert::readDbConfig(const QString &connName)
 {
     QSettings settings("config.ini", QSettings::IniFormat);
     settings.beginGroup(connName);
-//    const QStringList groups = settings.childGroups();
-//    if (!groups.contains(connName)) {
-//        qDebug() << "未找到连接名" << connName << "在配置文件中！";
-//        return DbConfig();
-//    }
 
     DbConfig cfg;
     cfg.host = settings.value("host", "localhost").toString();
@@ -63,9 +67,21 @@ void ExportInsert::updateProcess()
 {
 
 }
-
-void ExportInsert::on_buttonBox_accepted()
+void ExportInsert::getDbmes(QString connName, QString dbName)
 {
+    e_connName = connName;
+    e_dbName   = dbName;
+    qDebug()<<"1234"<<connName;
+}
+
+
+
+void ExportInsert::on_btn_ok_clicked()
+{
+    if (m_running) return;
+    m_running = true;
+
+    ui->progressBar->setRange(0, 0);
 
     QXlsx::Document bomXlsxR(filePath);
     int maxCol = bomXlsxR.dimension().lastColumn();
@@ -83,29 +99,37 @@ void ExportInsert::on_buttonBox_accepted()
             columnData[col-1][row-1] = value;
         }
     }
-    QString connName = ui->line_cnName->text().trimmed();
-    QString dbName   = ui->line_dbName->text().trimmed();
 
-    DbConfig cfg = readDbConfig(connName);
+    DbConfig cfg = readDbConfig(e_connName);
     if (cfg.user.isEmpty()) {
-        qDebug() << "错误：config.ini 中没有找到连接名" << connName;
+        qDebug() << "错误：config.ini 中没有找到连接名" << e_connName;
+        m_running = false;  // 导入操作失败时，重置标志位
         return;
     }
 
+    qDebug() << "准备发射 mysqlCreate 信号";
     emit mysqlCreate(
-        connName,
-        dbName,
+        e_connName,
+        e_dbName,
         cfg.host,
         cfg.user,
         cfg.password,
         columnData
     );
+    qDebug() << "mysqlCreate 信号已发射";
+
+    // 这行不再立即关闭对话框，改为只设置为已完成状态
     this->setResult(QDialog::Rejected);
+
+    // 完成后启用 OK 按钮，并重置标志位
+    m_running = false;  // 重置操作状态
+
     qDebug() << "配置读取成功:"
              << "host=" << cfg.host
              << "port=" << cfg.port
              << "user=" << cfg.user
              << "savePwd=" << cfg.savePwd
              << "saveConfig=" << cfg.saveConfig;
+
 }
 

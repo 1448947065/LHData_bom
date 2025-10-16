@@ -8,12 +8,14 @@ MainWindow::MainWindow(QWidget *parent)
     InitUi();
     initiazeTreeView();
     setLabelStatus();
+
     //ui->lab_host->setText("NOT CONNECT");
 }
 
 MainWindow::~MainWindow()
 {
     delete ui;
+    Insert->close();
 }
 
 void MainWindow::InitUi()
@@ -120,7 +122,8 @@ void MainWindow::InitUi()
     ui->btn_connection->installEventFilter(this);
     connect(con, &Connection::savedConnection,
             this, &MainWindow::onConnectionSaved);
-    // 禁用 btn_export 按钮并设置灰色外观
+    connect(this, &MainWindow::dbmes,
+            Insert, &ExportInsert::getDbmes);
     ui->btn_export->setEnabled(false);
     ui->btn_change->setEnabled(false);
     ui->btn_search->setEnabled(false);
@@ -234,7 +237,9 @@ void MainWindow::on_btn_sql_mar_clicked()
 void MainWindow::on_btn_bom_clicked()
 {
     ui->stackedWidget->setCurrentIndex(1);
-    dialog->show();
+    QString programPath = "\"D:/work project/bomlist/build-bomlist-msvc2015-Debug/debug/bomlist.exe\"";
+    QProcess::startDetached(programPath);
+
 }
 
 void MainWindow::insert()
@@ -368,6 +373,12 @@ void MainWindow::onConnectionDoubleClicked(const QModelIndex &index)
             }
         } else {
             connectToDatabase(connName);
+            db = QSqlDatabase::database(connName);
+            if (db.isOpen()) {
+                // 延迟执行确保UI更新完成
+                QTimer::singleShot(100, this, [this, connName](){
+                });
+            }
         }
     }
     if (!item->parent() && item->text() == "数据库连接") {
@@ -597,9 +608,9 @@ QStandardItem* MainWindow::findConnectionItem(const QString &connName)
 
 void MainWindow::onTreeViewContextMenu(const QPoint &pos)
 {
+    // 注意：pos 来自 viewport()
     QModelIndex index = ui->treeView->indexAt(pos);
     QStandardItem *item = treeModel->itemFromIndex(index);
-
     if (!item) return;
 
     QMenu contextMenu(this);
@@ -609,97 +620,129 @@ void MainWindow::onTreeViewContextMenu(const QPoint &pos)
         "QMenu::item:selected { background-color: #e6f2ff; color: #0066cc; }"
     );
 
-    if (!item->parent() && item->text() == "数据库连接") {
-        contextMenu.addAction("新建连接", this, &MainWindow::createNewConnection);
-        contextMenu.addAction("刷新", [this] {
-            initiazeTreeView();
-        });
-    }
+    const QString type = item->data(Qt::UserRole + 2).toString();
 
-    else if (item->data(Qt::UserRole + 2).toString() == "connection") {
-        QString connName = item->text();
-        contextMenu.addAction("新建数据库", [this, connName] {
-            bool ok;
-            QString dbName = QInputDialog::getText(this, "新建数据库", "请输入数据库名:", QLineEdit::Normal, "", &ok);
+    // 根节点：数据库连接
+    if (!item->parent() && item->text() == tr("数据库连接")) {
+        contextMenu.addAction(tr("新建连接"), this, &MainWindow::createNewConnection);
+        contextMenu.addAction(tr("刷新"), [this]{ initiazeTreeView(); });
+    }
+    // 连接节点
+    else if (type == "connection") {
+        const QString connName = item->text();
+
+        contextMenu.addAction(tr("新建数据库"), [this, connName] {
+            bool ok = false;
+            const QString dbName =
+                QInputDialog::getText(this, tr("新建数据库"), tr("请输入数据库名:"),
+                                      QLineEdit::Normal, "", &ok);
             if (ok && !dbName.isEmpty()) {
                 QSqlDatabase db = QSqlDatabase::database(connName);
                 if (db.isOpen()) {
                     QSqlQuery query(db);
                     if (query.exec(QString("CREATE DATABASE `%1`").arg(dbName))) {
-                        QMessageBox::information(this, "成功", "数据库已创建！");
+                        QMessageBox::information(this, tr("成功"), tr("数据库已创建！"));
                         connectToDatabase(connName);
                     } else {
-                        QMessageBox::critical(this, "错误", "创建失败: " + query.lastError().text());
-                   }
+                        QMessageBox::critical(this, tr("错误"),
+                                              tr("创建失败: ") + query.lastError().text());
+                    }
                 }
             }
         });
 
-        contextMenu.addAction("删除连接", [this, connName] {
-            if (QMessageBox::question(this, "确认删除",
-                QString("确定删除连接 [%1] 吗？\n这会同时从 config.ini 中移除。").arg(connName))
-                == QMessageBox::Yes) {
+        contextMenu.addAction(tr("删除连接"), [this, connName] {
+            if (QMessageBox::question(this, tr("确认删除"),
+                                      tr("确定删除连接 [%1] 吗？\n这会同时从 config.ini 中移除。")
+                                      .arg(connName)) == QMessageBox::Yes) {
                 deleteConnection(connName);
             }
         });
     }
     // 数据库节点
-    else if (item->data(Qt::UserRole + 2).toString() == "database") {
-        QString dbName = item->text();
+    else if (type == "database") {
+        const QString dbName = item->text();
         QStandardItem *connItem = item->parent();
-        QString connName = connItem->text();
-
-        contextMenu.addAction("删除数据库", [this, connName, dbName, item] {
-            QSqlDatabase db = QSqlDatabase::database(connName);
-            if (db.isOpen()) {
-                QSqlQuery query(db);
-                if (query.exec(QString("DROP DATABASE `%1`").arg(dbName))) {
-                    QMessageBox::information(this, "成功", "数据库已删除！");
-                    //connItem->removeRow(item->row());
-                } else {
-                    QMessageBox::critical(this, "错误", "删除失败: " + query.lastError().text());
+        if (connItem) {
+            const QString connName = connItem->text();
+            contextMenu.addAction(tr("删除数据库"), [this, connName, dbName] {
+                QSqlDatabase db = QSqlDatabase::database(connName);
+                if (db.isOpen()) {
+                    QSqlQuery query(db);
+                    if (query.exec(QString("DROP DATABASE `%1`").arg(dbName))) {
+                        QMessageBox::information(this, tr("成功"), tr("数据库已删除！"));
+                        // 可选：initiazeTreeView();
+                    } else {
+                        QMessageBox::critical(this, tr("错误"),
+                                              tr("删除失败: ") + query.lastError().text());
+                    }
                 }
-            }
-        });
+            });
+        }
     }
+    // Tables 分类节点（之前被注释导致菜单空）
+    else if (type == "category") {
+        // 找到父数据库/连接
+        QStandardItem *dbItem   = item->parent();
+        QStandardItem *connItem = dbItem ? dbItem->parent() : nullptr;
+        if (dbItem && connItem) {
+            const QString dbName   = dbItem->text();
+            const QString connName = connItem->text();
 
-//    // 表集合节点（不要放删除表）
-//    else if (item->data(Qt::UserRole + 2).toString() == "category") {
-//        contextMenu.addAction("导入表", [this]{
-//            Insert->show();
-//        });
-//    }
-
+            contextMenu.addAction(tr("导入数据表..."), [this, connName, dbName] {
+                if (!Insert) return;
+                qDebug()<<"[mes]:connName:"<<connName <<" "<< dbName;
+                emit dbmes(connName, dbName);
+                Insert->setWindowTitle(QString(tr("导入数据表 → 数据库 %1")).arg(dbName));
+                Insert->show(); Insert->raise(); Insert->activateWindow();
+            });
+        }
+    }
     // 表节点
-    else if (item->data(Qt::UserRole + 2).toString() == "table") {
-        QString tableName = item->text();
-        QStandardItem *dbItem = item->parent()->parent(); // tables 的父节点是 database
-        QString dbName = dbItem->text();
-        QStandardItem *connItem = dbItem->parent();
-        QString connName = connItem->text();
+    else if (type == "table") {
+        const QString tableName = item->text();
+        // tables 的父节点是 database
+        QStandardItem *dbItem   = item->parent() ? item->parent()->parent() : nullptr;
+        QStandardItem *connItem = dbItem ? dbItem->parent() : nullptr;
+        if (dbItem && connItem) {
+            const QString dbName   = dbItem->text();
+            const QString connName = connItem->text();
 
-        contextMenu.addAction("删除表", [this, connName, dbName, tableName, item] {
-            QSqlDatabase db = QSqlDatabase::database(connName);
-            if (db.isOpen()) {
-                if (db.databaseName() != dbName) {
-                    // 如果需要切换数据库
-                    db.setDatabaseName(dbName);
-                    db.open();
+            // 导入数据到该表...
+            contextMenu.addAction(tr("导入数据到该表..."),
+                                  [this, connName, dbName, tableName] {
+                if (!Insert) return;
+                // 若 Insert 支持设定目标表可放开下面一行：
+                // Insert->setTarget(connName, dbName, tableName);
+                Insert->setWindowTitle(
+                    QString(tr("导入数据 → %1.%2")).arg(dbName, tableName));
+                Insert->show(); Insert->raise(); Insert->activateWindow();
+            });
+
+            // 删除表
+            contextMenu.addAction(tr("删除表"),
+                                  [this, connName, dbName, tableName, item] {
+                QSqlDatabase db = QSqlDatabase::database(connName);
+                if (db.isOpen()) {
+                    if (db.databaseName() != dbName) { db.setDatabaseName(dbName); db.open(); }
+                    QSqlQuery query(db);
+                    if (query.exec(QString("DROP TABLE `%1`").arg(tableName))) {
+                        QMessageBox::information(this, tr("成功"), tr("表已删除！"));
+                        if (item->parent()) item->parent()->removeRow(item->row());
+                    } else {
+                        QMessageBox::critical(this, tr("错误"),
+                                              tr("删除失败: ") + query.lastError().text());
+                    }
                 }
-                QSqlQuery query(db);
-                if (query.exec(QString("DROP TABLE `%1`").arg(tableName))) {
-                    QMessageBox::information(this, "成功", "表已删除！");
-                    item->parent()->removeRow(item->row()); // 从 UI 树中移除
-                } else {
-                    QMessageBox::critical(this, "错误", "删除失败: " + query.lastError().text());
-                }
-            }
-        });
+            });
+        }
     }
-
-
-    contextMenu.exec(ui->treeView->viewport()->mapToGlobal(pos));
+    if (!contextMenu.actions().isEmpty()) {
+        contextMenu.exec(ui->treeView->viewport()->mapToGlobal(pos));
+    }
 }
+
+
 bool MainWindow::deleteConnection(const QString &connName)
 {
     if (QSqlDatabase::contains(connName)) {
@@ -915,3 +958,10 @@ void MainWindow::on_btn_serach_tab_clicked()
         // 可选：QMessageBox::information(this, "查找", "没有更多匹配，已回到起点。");
     }
 }
+
+void MainWindow::on_btn_hyper_clicked()
+{
+    QString programPath = "\"D:/work project/bomlist/build-bomlist-msvc2015-Debug/debug/超链接提取工具v1.0.0.exe\"";
+    QProcess::startDetached(programPath);
+}
+

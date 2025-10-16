@@ -242,6 +242,19 @@
       </spacer>
      </item>
      <item>
+      <widget class="QPushButton" name="btn_str">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="text">
+        <string>提取结构件内容</string>
+       </property>
+      </widget>
+     </item>
+     <item>
       <widget class="QPushButton" name="btn_comp">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
@@ -250,7 +263,7 @@
         </sizepolicy>
        </property>
        <property name="text">
-        <string>提取内容</string>
+        <string>提取清单内容</string>
        </property>
       </widget>
      </item>

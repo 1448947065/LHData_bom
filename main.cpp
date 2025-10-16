@@ -3,6 +3,7 @@
 #include <QFile>
 #include <QDebug>
 #include <QMainWindow>
+#include <login.h>
 #define DPI_ENABLE 1
 int main(int argc, char *argv[]) {
     QApplication a(argc, argv);
@@ -14,7 +15,14 @@ int main(int argc, char *argv[]) {
     } else {
         qDebug() << "Failed to load QSS:" << qssFile.errorString(); // 打印错误
     }
-    MainWindow w;
-    w.show();
-    return a.exec();
+    login w;
+    if (w.exec() == QDialog::Accepted) {
+        MainWindow mainUi;
+        mainUi.show();
+        return a.exec();
+    }
+    else {
+        w.show();
+        return a.exec();
+    }
 }

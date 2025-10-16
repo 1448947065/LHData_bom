@@ -1,4 +1,4 @@
-QT       += sql core gui xlsx
+QT       += sql core gui xlsx network
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -16,6 +16,8 @@ SOURCES += \
     dialog.cpp \
     exportinsert.cpp \
     lhxlsx.cpp \
+    login.cpp \
+    logon.cpp \
     main.cpp \
     mainwindow.cpp \
     mysql.cpp \
@@ -29,6 +31,8 @@ HEADERS += \
     dialog.h \
     exportinsert.h \
     lhxlsx.h \
+    login.h \
+    logon.h \
     mainwindow.h \
     mysql.h \
     titlebar.h
@@ -39,6 +43,8 @@ FORMS += \
     deldatabase.ui \
     dialog.ui \
     exportinsert.ui \
+    login.ui \
+    logon.ui \
     mainwindow.ui
 
 # QMAKE_CFLAGS  += /utf-8

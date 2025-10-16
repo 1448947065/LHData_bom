@@ -6,6 +6,7 @@
 #include <QDebug>
 #include <QtXlsx>
 #include <mysql.h>
+
 struct DbConfig {
     QString host;
     int port;
@@ -28,6 +29,7 @@ public:
     ~ExportInsert();
     MySql *dbManagerExport = new MySql(this);
     void updateProcess();
+    void getDbmes(QString connName, QString dbName);
 signals:
     bool mysqlCreate(const QString &cnName,
                      const QString &dbName,
@@ -37,12 +39,16 @@ signals:
                      const QVector<QVector<QString>> &columnData);
 private slots:
     void on_pushButton_clicked();
-
-    void on_buttonBox_accepted();
+    void on_btn_ok_clicked();
 
 private:
     Ui::ExportInsert *ui;
     QString filePath;
+    QString e_connName;
+    QString e_dbName;
+    bool m_running = false;
+    bool m_finished = false;
+    QMetaObject::Connection m_progConn;
 protected:
     DbConfig readDbConfig(const QString &connName);
 };

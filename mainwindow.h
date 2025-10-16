@@ -13,6 +13,7 @@
 #include <QMenuBar>
 #include <QFileDialog>
 #include <QDebug>
+
 #include <QSqlError>
 #include <QSqlQuery>
 #include <QTreeView>
@@ -26,7 +27,6 @@
 #include <createdatabase.h>
 #include <deldatabase.h>
 #include <exportinsert.h>
-#include "dialog.h"
 //class
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -56,8 +56,10 @@ private slots:
 
     void on_btn_serach_tab_clicked();
 
-signals:
+    void on_btn_hyper_clicked();
 
+signals:
+    void dbmes(QString connName, QString dbName);
 
 protected:
     void InitUi();
@@ -78,9 +80,9 @@ protected:
     void changeEvent(QEvent *event);
     bool eventFilter(QObject *obj, QEvent *event);
     bool deleteConnection(const QString &connName);
+    void selectData();
 private:
     Ui::MainWindow *ui;
-    Dialog *dialog = new Dialog(this);
     Connection *con = new Connection;
     CreateDatabase *cre = new CreateDatabase;
     DelDataBase *delui = new DelDataBase;
@@ -95,5 +97,6 @@ private:
     int m_findRow = -1;
     int m_findCol = -1;
     QString m_findTerm;
+    QSqlDatabase db;
 };
 #endif // MAINWINDOW_H
