@@ -27,6 +27,7 @@
 #include <createdatabase.h>
 #include <deldatabase.h>
 #include <exportinsert.h>
+#include "Globals.h"
 //class
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -98,5 +99,6 @@ private:
     int m_findCol = -1;
     QString m_findTerm;
     QSqlDatabase db;
+
 };
 #endif // MAINWINDOW_H

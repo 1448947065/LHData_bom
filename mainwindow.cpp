@@ -17,12 +17,20 @@ MainWindow::~MainWindow()
     delete ui;
     Insert->close();
 }
-
 void MainWindow::InitUi()
 {
+
     ui->btn_sql_mar->setText(tr("数据库"));
     ui->btn_bom->setText(tr("双清单管理工具"));
     ui->btn_hyper->setText(tr("超链接提取工具"));
+
+    if (g_usr_n == "test") {
+        qDebug()<<"g_usr_n"<<g_usr_n;
+        ui->btn_sql_mar->setEnabled(true);
+    }
+    else {
+        ui->btn_sql_mar->setDisabled(true);
+    }
     setWindowFlag(Qt::FramelessWindowHint, true);
     setAttribute(Qt::WA_TranslucentBackground, true);
 //    setStyleSheet("background: transparent;");
@@ -839,9 +847,8 @@ void MainWindow::createNewConnection()
 
 void MainWindow::setTableStyle()
 {
-    QSqlTableModel *model = dbManager->getModel("lhbom");
+    QSqlTableModel *model = dbManager->getModel("NonCompliant");
 
-    // 用代理包装一下
     auto *proxy = new QSortFilterProxyModel(this);
     proxy->setSourceModel(model);
     proxy->setFilterCaseSensitivity(Qt::CaseInsensitive);
@@ -849,7 +856,6 @@ void MainWindow::setTableStyle()
 
     ui->tableView->setModel(proxy);
 
-    // 设置表格样式（你原来的 QSS 保留）
     ui->tableView->setStyleSheet(
         "QTableView { background:white; }"
         "QTableView::item:selected { background:#fff3b0; color:black; }"
@@ -857,7 +863,6 @@ void MainWindow::setTableStyle()
     ui->tableView->setSelectionBehavior(QAbstractItemView::SelectItems);
     ui->tableView->setSelectionMode(QAbstractItemView::ExtendedSelection);
 
-    // 连接搜索框
     connect(ui->line_search, &QLineEdit::textChanged, this, [=](const QString &s){
 #if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         proxy->setFilterRegularExpression(QRegularExpression(QRegularExpression::escape(s),

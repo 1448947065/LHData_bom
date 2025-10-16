@@ -24,6 +24,7 @@ SOURCES += \
     titlebar.cpp
 
 HEADERS += \
+    Globals.h \
     btnstyle.h \
     connection.h \
     createdatabase.h \

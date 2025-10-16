@@ -6,14 +6,12 @@ login::login(QWidget *parent) :
     ui(new Ui::login)
 {
     ui->setupUi(this);
-    connect(logondialog, &logon::reg_end, this, &login::reg_callback);
 }
 
 login::~login()
 {
     delete ui;
 }
-
 void login::on_btn_sign_in_clicked()
 {
     UserName = ui->line_username->text().trimmed();
@@ -23,19 +21,19 @@ void login::on_btn_sign_in_clicked()
         QMessageBox::warning(this, "警告", "用户名和密码不能为空");
         return;
     }
-    emit check_pwd(UserName, PassWord);
-    mainWindow.show();
-    this->hide();
+    bool result = l_sql->login_check_pwd(UserName, PassWord);
+    if (result) {
+        g_usr_n = UserName;
+        mainWindow.show();
+        this->hide();
+    }
+    else {
+        QMessageBox::warning(this, tr("警告"), tr("用户名或密码错误"));
+    }
 }
 
 void login::on_btn_sign_up_clicked()
 {
     logondialog->show();
     this->hide();
-}
-
-void login::reg_callback()
-{
-    this->show();
-    logondialog->hide();
 }

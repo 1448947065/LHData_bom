@@ -8,7 +8,8 @@ class MySql;
 }
 MySql::MySql(QWidget *parent) : QWidget(parent)
 {
-    connect(this, &MySql::registerResult, m_logon, &logon::registersult);
+//        m_logon = new logon(this);
+
 }
 void MySql::recv_excel()
 {
@@ -115,7 +116,7 @@ bool MySql::initializeDatabase(const QString &cnName, const QString &DataBaseNam
         return q.next();
     };
 
-    const QString tableName = "Non-compliant";
+    const QString tableName = "NonCompliant";
     const QString tableNameQuoted = backtick(tableName);
 
     // === 3) 若表不存在：按表头一次性建表 ===
@@ -312,92 +313,195 @@ int MySql::insertDatabase()
     return 0;
 }
 
-void MySql::login_check_pwd(QString UserName, QString PassWord)
+bool MySql::login_check_pwd(QString UserName, QString PassWord)
 {
+    qDebug() << "=== 登录校验开始 ===";
 
+    UserName = UserName.trimmed();
+    if (UserName.isEmpty() || PassWord.isEmpty()) {
+        return false;
+    }
+
+    const QString connName = QString("conn_login_%1").arg(QDateTime::currentMSecsSinceEpoch());
+    {
+        QSqlDatabase db = QSqlDatabase::addDatabase("QMYSQL", connName);
+        db.setHostName("192.168.1.56");
+        db.setPort(3306);
+        db.setUserName("remote_admin");
+        db.setPassword("123456");
+        db.setDatabaseName("lhlist");
+
+        if (!db.open()) {
+            qCritical() << "登录时数据库连接失败:" << db.lastError().text();
+            return false;
+            goto CLEANUP;
+        }
+
+        // 2) 取出 password 字段：形如 "salt|hexhash"
+        QString dbPassword;
+        {
+            QSqlQuery q(db);
+            q.prepare("SELECT password FROM users WHERE username = ? LIMIT 1");
+            q.addBindValue(UserName);
+            if (!q.exec()) {
+                qCritical() << "查询用户失败:" << q.lastError().text();
+                return false;
+                goto CLEANUP;
+            }
+            if (!q.next()) {
+                return false;
+                goto CLEANUP;
+            }
+            dbPassword = q.value(0).toString();
+        }
+
+        // 3) 拆分出 salt 和 storedHash
+        const int sep = dbPassword.indexOf('|');
+        if (sep <= 0) {
+            qWarning() << "存储口令格式异常:" << dbPassword;
+            return false;
+            goto CLEANUP;
+        }
+        const QString salt       = dbPassword.left(sep);
+        const QString storedHash = dbPassword.mid(sep + 1);
+
+        // 4) 重新计算哈希：SHA256( PassWord + salt )
+        const QString calcHash = QCryptographicHash::hash(
+            (PassWord + salt).toUtf8(),
+            QCryptographicHash::Sha256
+        ).toHex();
+
+        // 5) 常量时间比较，防止时间侧信道
+        auto ctEqual = [](const QByteArray& a, const QByteArray& b) {
+            if (a.size() != b.size()) return false;
+            unsigned char diff = 0;
+            for (int i = 0; i < a.size(); ++i) diff |= static_cast<unsigned char>(a[i] ^ b[i]);
+            return diff == 0;
+        };
+        const bool ok = ctEqual(storedHash.toLatin1(), calcHash.toLatin1());
+
+        if (!ok) {
+            return false;
+            goto CLEANUP;
+        }
+
+        // 6) 更新 last_login
+        {
+            QSqlQuery u(db);
+            u.prepare("UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE username = ?");
+            u.addBindValue(UserName);
+            if (!u.exec()) {
+                qWarning() << "更新 last_login 失败:" << u.lastError().text();
+                // 不阻断登录成功，只记录告警
+            }
+        }
+
+        // 7) 成功
+        qInfo() << "用户登录成功:" << UserName;
+        return true;
+    }
+
+CLEANUP:
+    QSqlDatabase::removeDatabase(connName);
+    qDebug() << "=== 登录校验结束 ===";
 }
+
 
 void MySql::logon_register(QString UserName, QString PassWord)
 {
+    qDebug() << "=== 注册函数开始 ===";
+
     // 1. 输入验证
     UserName = UserName.trimmed();
     if (UserName.isEmpty() || PassWord.isEmpty()) {
         emit registerResult(false, "用户名和密码不能为空");
+        qDebug() << "输入为空";
         return;
     }
     if (UserName.length() < 4 || UserName.length() > 50) {
         emit registerResult(false, "用户名长度需为4-50个字符");
+        qDebug() << "用户名长度不符";
         return;
     }
     if (PassWord.length() < 8) {
         emit registerResult(false, "密码长度至少8位");
+        qDebug() << "密码长度不足";
         return;
     }
 
-    // 2. 连接数据库（使用唯一连接名防止重复）
+    // 2. 创建数据库连接
     QString connName = QString("conn_%1").arg(QDateTime::currentMSecsSinceEpoch());
-    QSqlDatabase db = QSqlDatabase::addDatabase("QMYSQL", connName);
-    db.setHostName("192.168.1.56");
-    db.setPort(3306);
-    db.setUserName("remote_admin");
-    db.setPassword("123456");
-    db.setDatabaseName("lhlist");
+    {
+        qDebug() << "准备连接数据库:" << connName;
+        QSqlDatabase db = QSqlDatabase::addDatabase("QMYSQL", connName);
+        db.setHostName("192.168.1.56");
+        db.setPort(3306);
+        db.setUserName("remote_admin");
+        db.setPassword("123456");
+        db.setDatabaseName("lhlist");
 
-    if (!db.open()) {
-        qCritical() << "数据库连接失败:" << db.lastError().text();
-        emit registerResult(false, "系统错误：数据库连接失败");
-        QSqlDatabase::removeDatabase(connName);
-        return;
+        qDebug() << "驱动可用:" << QSqlDatabase::drivers();
+
+        if (!db.open()) {
+            qCritical() << "数据库连接失败:" << db.lastError().text();
+            emit registerResult(false, "数据库连接失败");
+            goto CLEANUP;
+        }
+        qDebug() << "数据库连接成功";
+
+        // 3. 检查用户名是否存在
+        {
+            QSqlQuery checkQuery(db);
+            checkQuery.prepare("SELECT 1 FROM users WHERE username = ?");
+            checkQuery.addBindValue(UserName);
+            qDebug() << "执行用户名检查:" << UserName;
+            if (!checkQuery.exec()) {
+                qCritical() << "用户名检查失败:" << checkQuery.lastError().text();
+                emit registerResult(false, "系统繁忙，请稍后重试");
+                goto CLEANUP;
+            }
+            if (checkQuery.next()) {
+                qDebug() << "用户名已存在:" << UserName;
+                emit registerResult(false, "该用户名已被注册");
+                goto CLEANUP;
+            }
+        }
+
+        // 4. 生成盐 + 哈希
+        QString salt = QUuid::createUuid().toString().mid(1, 8);
+        QString saltedPassword = PassWord + salt;
+        QString passwordHash = QCryptographicHash::hash(
+            saltedPassword.toUtf8(), QCryptographicHash::Sha256
+        ).toHex();
+        QString dbPassword = salt + "|" + passwordHash;
+
+        qDebug() << "生成密码哈希:" << dbPassword;
+
+        // 5. 插入用户
+        {
+            QSqlQuery insertQuery(db);
+            insertQuery.prepare("INSERT INTO users (username, password) VALUES (?, ?)");
+            insertQuery.addBindValue(UserName);
+            insertQuery.addBindValue(dbPassword);
+
+            qDebug() << "执行插入语句:" << insertQuery.lastQuery();
+            qDebug() << "绑定值:" << UserName << dbPassword;
+
+            if (!insertQuery.exec()) {
+                qCritical() << "注册失败:" << insertQuery.lastError().text()
+                            << "错误码:" << insertQuery.lastError().nativeErrorCode();
+                emit registerResult(false, "注册失败:" + insertQuery.lastError().text());
+                goto CLEANUP;
+            }
+        }
+
+        qInfo() << "用户注册成功:" << UserName;
+        emit registerResult(true, "注册成功");
     }
 
-    // 3. 检查用户名是否已存在
-    QSqlQuery checkQuery(db);
-    checkQuery.prepare("SELECT 1 FROM users WHERE username = ?");
-    checkQuery.addBindValue(UserName);
-    if (!checkQuery.exec()) {
-        qCritical() << "用户名检查失败:" << checkQuery.lastError().text();
-        emit registerResult(false, "系统繁忙，请稍后重试");
-        db.close();
-        QSqlDatabase::removeDatabase(connName);
-        return;
-    }
-    if (checkQuery.next()) {
-        emit registerResult(false, "该用户名已被注册");
-        db.close();
-        QSqlDatabase::removeDatabase(connName);
-        return;
-    }
-
-    // 4. 密码加盐并哈希
-    QString salt = QUuid::createUuid().toString().mid(1, 8);
-    QString saltedPassword = PassWord + salt;
-    QString passwordHash = QCryptographicHash::hash(
-        saltedPassword.toUtf8(), QCryptographicHash::Sha256
-    ).toHex();
-
-    QString dbPassword = salt + "|" + passwordHash;
-
-    // 5. 插入用户记录
-    QSqlQuery insertQuery(db);
-    insertQuery.prepare("INSERT INTO users (username, password) VALUES (?, ?)");
-    insertQuery.addBindValue(UserName);
-    insertQuery.addBindValue(dbPassword);
-    if (!insertQuery.exec()) {
-        qCritical() << "注册失败:" << insertQuery.lastError().text();
-        if (insertQuery.lastError().nativeErrorCode() == "1062")
-            emit registerResult(false, "用户名已被占用");
-        else
-            emit registerResult(false, "注册失败，请稍后重试");
-        db.close();
-        QSqlDatabase::removeDatabase(connName);
-        return;
-    }
-
-    // 6. 成功
-    qInfo() << "用户注册成功:" << UserName;
-    emit registerResult(true, "注册成功");
-
-    // 7. 清理连接
-    db.close();
+CLEANUP:
+    // 🔥 注意：removeDatabase 一定要在所有 Query 对象销毁后执行
+    qDebug() << "清理连接:" << connName;
     QSqlDatabase::removeDatabase(connName);
+    qDebug() << "=== 注册函数结束 ===";
 }

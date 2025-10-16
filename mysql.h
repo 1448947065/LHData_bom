@@ -16,7 +16,7 @@
 #include <QtSql/QSqlDatabase>
 #include <QtSql/QSqlQuery>
 #include <QtSql/QSqlError>
-#include "logon.h"
+//#include "logon.h"
 namespace Ui {
 class MySql;
 
@@ -43,7 +43,7 @@ public:
                                    const QString &user, const QString &userpwd, const QVector<QVector<QString>> &columnData);
     int insertDatabase();
     QSqlTableModel* getModel(const QString &tableName);
-    void login_check_pwd(QString UserName, QString PassWord);
+    bool login_check_pwd(QString UserName, QString PassWord);
     void logon_register(QString UserName, QString PassWord);
 public slots:
     void handleDbInfo(const QString &connName, const QString &host,
@@ -56,7 +56,7 @@ private:
     int row = 1;
     int col = 1;
     QSqlDatabase db;
-    logon *m_logon = new logon;
+//    logon* m_logon = new logon;
 protected:
     void recv_excel();
     void connectDatabase(const QString &connName, const QString &host,

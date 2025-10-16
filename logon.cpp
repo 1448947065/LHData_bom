@@ -6,6 +6,7 @@ logon::logon(QWidget *parent) :
     ui(new Ui::logon)
 {
     ui->setupUi(this);
+    connect(this, &logon::reg_str, m_sql, &MySql::logon_register);
 }
 
 logon::~logon()
@@ -15,7 +16,10 @@ logon::~logon()
 
 void logon::on_pushButton_clicked()
 {
-    emit reg_end();
+    QString reg_usr = ui->line_usr->text();
+    QString reg_pwd = ui->line_pwd1->text();
+    emit reg_str(reg_usr,reg_pwd);
+    qDebug("123r5");
 }
 
 void logon::registersult(bool result, QString resultt)

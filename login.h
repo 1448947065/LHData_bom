@@ -4,6 +4,9 @@
 #include <QDialog>
 #include <mainwindow.h>
 #include <logon.h>
+#include "mysql.h"
+
+extern QString g_usr_n;
 namespace Ui {
 class login;
 }
@@ -15,7 +18,7 @@ class login : public QDialog
 public:
     explicit login(QWidget *parent = nullptr);
     ~login();
-    void reg_callback();
+
 signals:
     void check_pwd(QString userName, QString pwd);
 private slots:
@@ -29,6 +32,7 @@ private:
     QString PassWord;
     MainWindow mainWindow;
     logon *logondialog = new logon();
+    MySql *l_sql = new MySql;
 };
 
 #endif // LOGIN_H
