@@ -13,6 +13,7 @@
         <file>img/cmysql.png</file>
         <file>img/databaseopen.png</file>
         <file>sytle.qss</file>
+        <file>img/userman.png</file>
     </qresource>
     <qresource prefix="/ini"/>
 </RCC>

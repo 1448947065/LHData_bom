@@ -1,6 +1,6 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
-
+QString g_usr_n = nullptr;
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent), ui(new Ui::MainWindow)
 {
@@ -70,6 +70,12 @@ void MainWindow::InitUi()
     ui->btn_export->setIcon(qicon5);
     ui->btn_export->setIconSize(QSize(40,40));
     ui->btn_export->setFixedSize(50, 50);
+
+    QIcon qicon6;
+    qicon5.addFile(":/img/userman.png");
+    ui->btn_user->setIcon(qicon5);
+    ui->btn_user->setIconSize(QSize(40,40));
+    ui->btn_user->setFixedSize(50, 50);
 
     auto *root = new QWidget(this);
     root->setAttribute(Qt::WA_StyledBackground, true);
@@ -366,130 +372,141 @@ void MainWindow::onConnectionDoubleClicked(const QModelIndex &index)
     QStandardItem *item = treeModel->itemFromIndex(index);
     if (!item) return;
 
-    QString itemType = item->data(Qt::UserRole + 2).toString();
+    const QString itemType = item->data(Qt::UserRole + 2).toString();
 
-    if (itemType == "connection") {
-
-        QString connName = item->text();
-        qDebug() << "双击连接项:" << connName;
-
-        if (item->rowCount() > 0) {
-            if (ui->treeView->isExpanded(index)) {
-                ui->treeView->collapse(index);
-            } else {
-                ui->treeView->expand(index);
-            }
-        } else {
-            connectToDatabase(connName);
-            db = QSqlDatabase::database(connName);
-            if (db.isOpen()) {
-                // 延迟执行确保UI更新完成
-                QTimer::singleShot(100, this, [this, connName](){
-                });
-            }
-        }
-    }
+    // 根节点“数据库连接”：切换展开/收起
     if (!item->parent() && item->text() == "数据库连接") {
         ui->treeView->setExpanded(index, !ui->treeView->isExpanded(index));
         return;
     }
-    else if (itemType == "database" || itemType == "category") {
-        ui->btn_export->setEnabled(true);
-        //ui->btn_export->setStyleSheet("");  // 恢复默认样式
-        if (ui->treeView->isExpanded(index)) {
-            ui->treeView->collapse(index);
-            // 数据库连接成功后恢复按钮可用状态
-            if (itemType == "database") {
-                item->setIcon(QIcon(":/img/databaseclose.png")); // 收起时
-                ui->btn_export->setEnabled(false);
-            }
-        } else {
-            ui->treeView->expand(index);
-            if (itemType == "database") {
-                item->setIcon(QIcon(":/img/databaseopen.png"));  // 展开时
-            }
-        }
-    }
-    else if (itemType == "table") {
-        QStandardItem *tableItem = item;
-        QStandardItem *tablesItem = tableItem->parent();
-        QStandardItem *dbItem = tablesItem ? tablesItem->parent() : nullptr;
-        QStandardItem *connItem = dbItem ? dbItem->parent() : nullptr;
 
+    // 连接节点
+    if (itemType == "connection") {
+        const QString connName = item->text();
+
+        if (item->rowCount() > 0) {
+            ui->treeView->setExpanded(index, !ui->treeView->isExpanded(index));
+        } else {
+            connectToDatabase(connName);
+        }
+        return;
+    }
+
+    // 数据库 / 分类
+    if (itemType == "database" || itemType == "category") {
+        const bool willExpand = !ui->treeView->isExpanded(index);
+        ui->treeView->setExpanded(index, willExpand);
+        if (itemType == "database") {
+            item->setIcon(QIcon(willExpand ? ":/img/databaseopen.png"
+                                           : ":/img/databaseclose.png"));
+            ui->btn_export->setEnabled(willExpand);
+        }
+        return;
+    }
+
+    // 表节点
+    if (itemType == "table") {
+        QStandardItem *tablesItem = item->parent();
+        QStandardItem *dbItem     = tablesItem ? tablesItem->parent() : nullptr;
+        QStandardItem *connItem   = dbItem ? dbItem->parent() : nullptr;
         if (!dbItem || !connItem) return;
 
-        QString connName = connItem->text();
-        QString dbName = dbItem->text();
-        QString tableName = tableItem->text();
+        QString connName  = connItem->text();
+        QString dbName    = dbItem->text();
+        QString tableName = item->text();
 
         QSqlDatabase db = QSqlDatabase::database(connName);
         if (!db.isOpen()) {
             QMessageBox::warning(this, "错误", "数据库连接已断开");
             return;
         }
-
-        db.setDatabaseName(dbName);
-        if (!db.open()) {
-            QMessageBox::critical(this, "错误", "无法打开数据库: " + db.lastError().text());
-            return;
+        if (db.databaseName() != dbName) {
+            db.setDatabaseName(dbName);
+            if (!db.open()) {
+                QMessageBox::critical(this, "错误",
+                                      "无法打开数据库: " + db.lastError().text());
+                return;
+            }
         }
 
-        if (ui->tableView->model()) {
-            delete ui->tableView->model();
-        }
-
-        QSqlTableModel *model = new QSqlTableModel(this, db);
-        model->setTable(tableName);
-        model->setEditStrategy(QSqlTableModel::OnRowChange);
-
-        if (!model->select()) {
-            QMessageBox::critical(this, "错误", "无法加载表数据: " + model->lastError().text());
-            delete model;
-            return;
-        }
-
-        ui->tableView->setModel(model);
-        ui->tableView->resizeColumnsToContents();
-        ui->tableView->setStyleSheet(
-            "QTableView {"
-            "    background-color: #ffffff;"
-            "    alternate-background-color: #f5f9ff;"  /* 浅蓝色交替行 */
-            "    gridline-color: #e0e0e0;"
-            "    border: none;"
-            "    font-size: 12px;"
-            "}"
-            "QTableView::item {"
-            "    padding: 6px;"
-            "    border-bottom: 1px solid #f0f0f0;"  /* 项之间的分隔线 */
-            "}"
-            "QTableView::item:selected {"
-            "    background-color: #e6f2ff;"
-            "    color: #0066cc;"
-            "}"
-            "QHeaderView::section {"
-            "    background-color: #f8f8f8;"
-            "    padding: 6px;"
-            "    border: 1px solid #e0e0e0;"
-            "}"
-        );
+        // 初始化代理模型
         if (!m_proxy) {
             m_proxy = new QSortFilterProxyModel(this);
             m_proxy->setFilterCaseSensitivity(Qt::CaseInsensitive);
             m_proxy->setFilterKeyColumn(-1);
             ui->tableView->setModel(m_proxy);
-            ui->tableView->setSelectionBehavior(QAbstractItemView::SelectItems);
-            ui->tableView->setSelectionMode(QAbstractItemView::ExtendedSelection);
+            ui->tableView->setAlternatingRowColors(true);
+
+            auto *h = ui->tableView->horizontalHeader();
+            h->setStretchLastSection(true);
+            h->setSectionResizeMode(QHeaderView::Interactive);
+
+            // ===== 字体 / 样式收紧版 =====
+            QFont cellFont = ui->tableView->font();
+            cellFont.setPointSize(10);  // 原 13 → 更小
+            ui->tableView->setFont(cellFont);
+
+            QFont hdrFont = h->font();
+            hdrFont.setPointSize(9);    // 表头更小
+            hdrFont.setBold(true);
+            h->setFont(hdrFont);
+            ui->tableView->verticalHeader()->setFont(hdrFont);
+
+            // 行高更紧凑
+            int rowH = QFontMetrics(cellFont).height() + 6; // 原 +12 → +6
+            ui->tableView->verticalHeader()->setDefaultSectionSize(rowH);
+
+            // 紧凑样式
             ui->tableView->setStyleSheet(
-                "QTableView::item:selected { background:#fff3b0; color:black; }"
+                "QTableView {"
+                "  font-size:10pt;"
+                "  background:#ffffff;"
+                "  alternate-background-color:#f9fcff;"
+                "  gridline-color:#d0d0d0;"
+                "  border:none;"
+                "}"
+                "QTableView::item {"
+                "  padding:4px 6px;"
+                "  border-bottom:1px solid #eaeaea;"
+                "}"
+                "QTableView::item:selected {"
+                "  background:#e7f0ff; color:#004c99;"
+                "}"
+                "QHeaderView::section {"
+                "  font-size:9pt;"
+                "  padding:3px 6px;"
+                "  background:#f6f6f6;"
+                "  border:1px solid #e0e0e0;"
+                "}"
             );
         }
-        m_proxy->setSourceModel(model);
-        ui->tableView->setAlternatingRowColors(true);
+
+        // 重建模型
+        m_proxy->setSourceModel(nullptr);
+        if (m_tableModel) { delete m_tableModel; m_tableModel = nullptr; }
+        m_tableModel = new QSqlTableModel(this, db);
+        m_tableModel->setTable(tableName);
+        m_tableModel->setEditStrategy(QSqlTableModel::OnRowChange);
+
+        if (!m_tableModel->select()) {
+            QMessageBox::critical(this, "错误",
+                                  "无法加载表数据: " + m_tableModel->lastError().text());
+            delete m_tableModel;
+            m_tableModel = nullptr;
+            return;
+        }
+
+        m_proxy->setSourceModel(m_tableModel);
+
+        // 去掉 QTimer 延时，直接自适应一次
         ui->tableView->resizeColumnsToContents();
+        ui->tableView->horizontalHeader()->setSectionResizeMode(QHeaderView::Interactive);
 
         qDebug() << "显示表数据:" << dbName << "." << tableName;
     }
 }
+
+
 
 void MainWindow::connectToDatabase(const QString &connName)
 {
@@ -968,5 +985,11 @@ void MainWindow::on_btn_hyper_clicked()
 {
     QString programPath = "\"D:/work project/bomlist/build-bomlist-msvc2015-Debug/debug/超链接提取工具v1.0.0.exe\"";
     QProcess::startDetached(programPath);
+}
+
+
+void MainWindow::on_btn_user_clicked()
+{
+
 }
 

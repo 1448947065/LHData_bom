@@ -18,6 +18,7 @@ public:
     explicit logon(QWidget *parent = nullptr);
     ~logon();
     void registersult(bool result, QString resultt);
+    void suc_result(bool result);
 signals:
     void reg_str(QString UserName, QString PassWord);
 private slots:

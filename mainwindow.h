@@ -27,7 +27,7 @@
 #include <createdatabase.h>
 #include <deldatabase.h>
 #include <exportinsert.h>
-#include "Globals.h"
+extern QString g_usr_n;
 //class
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -58,6 +58,8 @@ private slots:
     void on_btn_serach_tab_clicked();
 
     void on_btn_hyper_clicked();
+
+    void on_btn_user_clicked();
 
 signals:
     void dbmes(QString connName, QString dbName);
@@ -99,6 +101,6 @@ private:
     int m_findCol = -1;
     QString m_findTerm;
     QSqlDatabase db;
-
+    QSqlTableModel        *m_tableModel = nullptr;
 };
 #endif // MAINWINDOW_H
