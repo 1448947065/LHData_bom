@@ -6,6 +6,7 @@
 #include <QFormLayout>
 #include <QStackedWidget>
 #include <mainwindow.h>
+
 namespace Ui {
 class login;
 }

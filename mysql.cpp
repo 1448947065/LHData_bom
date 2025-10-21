@@ -210,14 +210,13 @@ bool MySql::initializeDatabase(const QString &cnName, const QString &DataBaseNam
         if (c < 0 || c >= colCount) return QVariant();
         if (r < 0 || r >= columnData[c].size()) return QVariant();
         QString v = columnData[c][r].trimmed();
-        if (v.isEmpty()) return QVariant(QVariant::String); // 插入 NULL
+        if (v.isEmpty()) return QVariant(QVariant::String);
         return QVariant(v);
     };
 
-    // 动态调整批次大小
-    int batchSize = std::max(1, rowCount / 100); // 最大 100 行批量插入，避免一次插入过多行
+    int batchSize = std::max(1, rowCount / 100);
 
-    for (int r = 1; r < rowCount; ++r) { // 从第二行（索引1）开始
+    for (int r = 1; r < rowCount; ++r) {
         insertQuery.clear();
         insertQuery.prepare(insertSql);
         for (int c = 0; c < colCount; ++c) {
@@ -230,16 +229,13 @@ bool MySql::initializeDatabase(const QString &cnName, const QString &DataBaseNam
         }
         ++insertedCount;
 
-        // 每插入一定行数后更新进度条
         if (r % batchSize == 0 || r == rowCount - 1) {
             emit progressChanged(r, rowCount, false, true, QString());
         }
 
-        // 处理界面更新以避免卡死
         if ((r & 0x3F) == 0) QCoreApplication::processEvents();
     }
 
-    // 提交事务
     if (!db.commit()) {
         qDebug() << "提交事务失败：" << db.lastError().text();
         db.rollback();
@@ -398,6 +394,7 @@ bool MySql::login_check_pwd(QString UserName, QString PassWord)
 
         // 7) 成功
         qInfo() << "用户登录成功:" << UserName;
+        g_usr_n = UserName;
         return true;
     }
 

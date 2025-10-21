@@ -8,6 +8,7 @@ Connection::Connection(QWidget *parent) :
     ui->setupUi(this);
     ui->line_port->setPlaceholderText("3306");
     loadConfigFromIni();
+    applyGlobalStyle();
 }
 
 Connection::~Connection()
@@ -103,4 +104,46 @@ bool Connection::loadConfigFromIni()
 
     qDebug() << "配置已加载到UI";
     return true;
+}
+void Connection::applyGlobalStyle()
+{
+    // 主窗口样式
+    this->setStyleSheet(R"(
+        /* 基础窗口样式 */
+        QDialog {
+            background-color: #f5f7fa;
+            font-family: "Microsoft YaHei";
+        }
+
+        /* 所有按钮统一蓝色风格 */
+        QPushButton {
+            background-color: #4a9ff9;
+            color: white;
+            border-radius: 4px;
+            padding: 6px 12px;
+            min-width: 80px;
+            border: none;
+        }
+        QPushButton:hover {
+            background-color: #3a8ee6;
+        }
+        QPushButton:pressed {
+            background-color: #2a7dd6;
+        }
+        QPushButton:disabled {
+            background-color: #cccccc;
+            color: #888888;
+        }
+
+        QProgressBar {
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            background-color: white;
+            text-align: center;
+        }
+        QProgressBar::chunk {
+            background-color: #4a9ff9;
+            border-radius: 3px;
+        }
+    )");
 }

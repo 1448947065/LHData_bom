@@ -17,6 +17,7 @@
 #include <QtSql/QSqlQuery>
 #include <QtSql/QSqlError>
 //#include "logon.h"
+extern QString g_usr_n;
 namespace Ui {
 class MySql;
 

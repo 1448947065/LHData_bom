@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>425</width>
-    <height>314</height>
+    <height>196</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -16,7 +16,7 @@
   <widget class="QPushButton" name="pushButton">
    <property name="geometry">
     <rect>
-     <x>190</x>
+     <x>220</x>
      <y>30</y>
      <width>191</width>
      <height>31</height>
@@ -29,8 +29,8 @@
   <widget class="QLabel" name="label_3">
    <property name="geometry">
     <rect>
-     <x>30</x>
-     <y>190</y>
+     <x>20</x>
+     <y>81</y>
      <width>111</width>
      <height>16</height>
     </rect>
@@ -42,8 +42,8 @@
   <widget class="QLineEdit" name="line_bomName">
    <property name="geometry">
     <rect>
-     <x>190</x>
-     <y>179</y>
+     <x>220</x>
+     <y>70</y>
      <width>191</width>
      <height>31</height>
     </rect>
@@ -52,8 +52,8 @@
   <widget class="QProgressBar" name="progressBar">
    <property name="geometry">
     <rect>
-     <x>30</x>
-     <y>270</y>
+     <x>20</x>
+     <y>161</y>
      <width>391</width>
      <height>23</height>
     </rect>
@@ -65,8 +65,8 @@
   <widget class="QPushButton" name="btn_ok">
    <property name="geometry">
     <rect>
-     <x>190</x>
-     <y>219</y>
+     <x>220</x>
+     <y>110</y>
      <width>191</width>
      <height>31</height>
     </rect>

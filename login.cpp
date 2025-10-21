@@ -240,6 +240,7 @@ void login::on_btn_sign_in_clicked()
     bool result =  l_sql->login_check_pwd(UserName, PassWord);
     if (result) {
         QMessageBox::information(this, "提示", "成功登录");
+        m_ui.updateButtonPermissions();
         this->accept();
     }
     else {

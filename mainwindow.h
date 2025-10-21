@@ -27,6 +27,7 @@
 #include <createdatabase.h>
 #include <deldatabase.h>
 #include <exportinsert.h>
+#include <usrmgr.h>
 extern QString g_usr_n;
 //class
 QT_BEGIN_NAMESPACE
@@ -41,6 +42,7 @@ public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
     MySql *dbManager = new MySql(this);
+    void updateButtonPermissions();
 private slots:
     void onConnectionSaved(const QString &connName);
     void on_btn_sql_mar_clicked();
@@ -102,5 +104,6 @@ private:
     QString m_findTerm;
     QSqlDatabase db;
     QSqlTableModel        *m_tableModel = nullptr;
+    UsrMgr *usrmanger = new UsrMgr(this);
 };
 #endif // MAINWINDOW_H

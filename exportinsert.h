@@ -51,6 +51,7 @@ private:
     QMetaObject::Connection m_progConn;
 protected:
     DbConfig readDbConfig(const QString &connName);
+    void applyGlobalStyle();
 };
 
 #endif // EXPORTINSERT_H

@@ -27,7 +27,7 @@ protected:
                                      bool savePwd, bool saveConfig);
      bool Connection::loadConfigFromIni();
 
-
+     void Connection::applyGlobalStyle();
 signals:
     void sig_dbInfo(QString, QString, quint16, QString, QString, bool, bool);
     void savedConnection(const QString &configName);

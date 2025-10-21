@@ -8,8 +8,7 @@ MainWindow::MainWindow(QWidget *parent)
     InitUi();
     initiazeTreeView();
     setLabelStatus();
-
-    //ui->lab_host->setText("NOT CONNECT");
+    //updateButtonPermissions();
 }
 
 MainWindow::~MainWindow()
@@ -23,14 +22,6 @@ void MainWindow::InitUi()
     ui->btn_sql_mar->setText(tr("数据库"));
     ui->btn_bom->setText(tr("双清单管理工具"));
     ui->btn_hyper->setText(tr("超链接提取工具"));
-
-    if (g_usr_n == "test") {
-        qDebug()<<"g_usr_n"<<g_usr_n;
-        ui->btn_sql_mar->setEnabled(true);
-    }
-    else {
-        ui->btn_sql_mar->setDisabled(true);
-    }
     setWindowFlag(Qt::FramelessWindowHint, true);
     setAttribute(Qt::WA_TranslucentBackground, true);
 //    setStyleSheet("background: transparent;");
@@ -138,11 +129,27 @@ void MainWindow::InitUi()
             this, &MainWindow::onConnectionSaved);
     connect(this, &MainWindow::dbmes,
             Insert, &ExportInsert::getDbmes);
-    ui->btn_export->setEnabled(false);
-    ui->btn_change->setEnabled(false);
-    ui->btn_search->setEnabled(false);
-    ui->btn_del->setEnabled(false);
-    ui->btn_create->setEnabled(false);
+
+    //updateButtonPermissions();
+    if (g_usr_n != "root") {
+        ui->btn_sql_mar->setDisabled(true);
+        ui->btn_connection->setDisabled(true);
+        ui->btn_user->setDisabled(true);
+        ui->btn_export->setEnabled(false);
+        ui->btn_change->setEnabled(false);
+        ui->btn_search->setEnabled(false);
+        ui->btn_del->setEnabled(false);
+        ui->btn_create->setEnabled(false);
+    } else {
+        ui->btn_sql_mar->setEnabled(true);
+        ui->btn_user->setEnabled(true);
+        ui->btn_export->setEnabled(true);
+        ui->btn_change->setEnabled(true);
+        ui->btn_search->setEnabled(true);
+        ui->btn_del->setEnabled(true);
+        ui->btn_create->setEnabled(true);
+
+    }
 }
 void MainWindow::onConnectionSaved(const QString &connName)
 {
@@ -246,6 +253,7 @@ void MainWindow::on_btn_sql_mar_clicked()
     auto *m = new MySql(this);
     ui->stackedWidget->insertWidget(1, m);
     ui->stackedWidget->setCurrentIndex(0);
+
 }
 
 void MainWindow::on_btn_bom_clicked()
@@ -273,7 +281,9 @@ void MainWindow::on_btn_search_clicked()
 void MainWindow::initiazeTreeView()
 {
     qDebug() << "======== 初始化树状视图 ========";
-
+    if (g_usr_n != "root") {
+        ui->treeView->setDisabled(true);
+    }
     if (treeModel) {
         delete treeModel;
     }
@@ -330,7 +340,7 @@ void MainWindow::initiazeTreeView()
                 QIcon ico(":/img/databaseclose.png");
                 if (!ico.isNull()) it->setIcon(ico);
             } else if (type == "connection") {
-                QIcon ico(":/img/mysql.png"); // 或你想要的“未展开/未连接”图标
+                QIcon ico(":/img/mysql.png");
                 if (!ico.isNull()) it->setIcon(ico);
             }
         }
@@ -443,20 +453,18 @@ void MainWindow::onConnectionDoubleClicked(const QModelIndex &index)
 
             // ===== 字体 / 样式收紧版 =====
             QFont cellFont = ui->tableView->font();
-            cellFont.setPointSize(10);  // 原 13 → 更小
+            cellFont.setPointSize(10);
             ui->tableView->setFont(cellFont);
 
             QFont hdrFont = h->font();
-            hdrFont.setPointSize(9);    // 表头更小
+            hdrFont.setPointSize(9);
             hdrFont.setBold(true);
             h->setFont(hdrFont);
             ui->tableView->verticalHeader()->setFont(hdrFont);
 
-            // 行高更紧凑
             int rowH = QFontMetrics(cellFont).height() + 6; // 原 +12 → +6
             ui->tableView->verticalHeader()->setDefaultSectionSize(rowH);
 
-            // 紧凑样式
             ui->tableView->setStyleSheet(
                 "QTableView {"
                 "  font-size:10pt;"
@@ -481,13 +489,12 @@ void MainWindow::onConnectionDoubleClicked(const QModelIndex &index)
             );
         }
 
-        // 重建模型
         m_proxy->setSourceModel(nullptr);
         if (m_tableModel) { delete m_tableModel; m_tableModel = nullptr; }
         m_tableModel = new QSqlTableModel(this, db);
         m_tableModel->setTable(tableName);
-        m_tableModel->setEditStrategy(QSqlTableModel::OnRowChange);
-
+        m_tableModel->setEditStrategy(QSqlTableModel::OnManualSubmit);
+        ui->tableView->setEditTriggers(QAbstractItemView::NoEditTriggers);
         if (!m_tableModel->select()) {
             QMessageBox::critical(this, "错误",
                                   "无法加载表数据: " + m_tableModel->lastError().text());
@@ -498,7 +505,6 @@ void MainWindow::onConnectionDoubleClicked(const QModelIndex &index)
 
         m_proxy->setSourceModel(m_tableModel);
 
-        // 去掉 QTimer 延时，直接自适应一次
         ui->tableView->resizeColumnsToContents();
         ui->tableView->horizontalHeader()->setSectionResizeMode(QHeaderView::Interactive);
 
@@ -646,13 +652,10 @@ void MainWindow::onTreeViewContextMenu(const QPoint &pos)
     );
 
     const QString type = item->data(Qt::UserRole + 2).toString();
-
-    // 根节点：数据库连接
     if (!item->parent() && item->text() == tr("数据库连接")) {
         contextMenu.addAction(tr("新建连接"), this, &MainWindow::createNewConnection);
         contextMenu.addAction(tr("刷新"), [this]{ initiazeTreeView(); });
     }
-    // 连接节点
     else if (type == "connection") {
         const QString connName = item->text();
 
@@ -938,14 +941,13 @@ void MainWindow::on_btn_serach_tab_clicked()
     const int cols = model->columnCount();
     if (rows == 0 || cols == 0) return;
 
-    // 从下一个单元格开始找（行主序遍历）
     int r = m_findRow, c = m_findCol;
-    // 计算起点：第一次点击从 (0,0)，否则从下一个
+
     if (r < 0 || c < 0) { r = 0; c = 0; }
     else {
         ++c;
         if (c >= cols) { c = 0; ++r; }
-        if (r >= rows) { r = 0; c = 0; } // wrap 到开头
+        if (r >= rows) { r = 0; c = 0; }
     }
 
     bool found = false;
@@ -953,7 +955,7 @@ void MainWindow::on_btn_serach_tab_clicked()
         QModelIndex idx = model->index(r, c);
         const QString text = model->data(idx, Qt::DisplayRole).toString();
         if (text.contains(term, Qt::CaseInsensitive)) {
-            // 选中并滚动到视图中间
+
             auto *sel = ui->tableView->selectionModel();
             if (sel) {
                 sel->clearSelection();
@@ -961,23 +963,21 @@ void MainWindow::on_btn_serach_tab_clicked()
                 ui->tableView->scrollTo(idx, QAbstractItemView::PositionAtCenter);
                 ui->tableView->setCurrentIndex(idx);
             }
-            // 记录当前位置，下一次从这里的下一个开始
+
             m_findRow = r;
             m_findCol = c;
             found = true;
             break;
         }
-        // 下一个单元格
+
         ++c;
         if (c >= cols) { c = 0; ++r; }
         if (r >= rows) { r = 0; }
     }
 
     if (!found) {
-        // 没找到：清空状态并可选提示；再次点击会从头找
         m_findRow = -1;
         m_findCol = -1;
-        // 可选：QMessageBox::information(this, "查找", "没有更多匹配，已回到起点。");
     }
 }
 
@@ -987,9 +987,17 @@ void MainWindow::on_btn_hyper_clicked()
     QProcess::startDetached(programPath);
 }
 
-
 void MainWindow::on_btn_user_clicked()
 {
-
+    usrmanger->show();
 }
 
+void MainWindow::updateButtonPermissions()
+{
+    if (g_usr_n != "root") {
+        QMessageBox::warning(this, "提示", "当前非管理账户无法访问数据库！");
+    } else {
+        ui->btn_sql_mar->setEnabled(true);
+    }
+
+}
